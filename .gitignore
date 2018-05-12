@@ -1,0 +1,11 @@
+.dart_tool/
+.pub/
+.idea/
+.vscode/
+.buildlog
+build/
+doc/api/
+
+packages
+.packages
+pubspec.lock

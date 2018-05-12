@@ -1,0 +1,26 @@
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+
+errors:
+  unused_element: error
+  unused_import: error
+  unused_local_variable: error
+  dead_code: error
+
+linter:
+  rules:
+    - avoid_empty_else
+    - avoid_init_to_null
+    - camel_case_types
+    - cancel_subscriptions
+    - empty_constructor_bodies
+    - empty_statements
+    - hash_and_equals
+    - iterable_contains_unrelated_type
+    - list_remove_unrelated_type
+    - prefer_final_fields
+    - test_types_in_equals
+    - unrelated_type_equality_checks
+    - valid_regexps

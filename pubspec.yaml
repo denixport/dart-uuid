@@ -1,0 +1,12 @@
+name: uuid_type
+description: 'RFC4122 UUID type, parser and generators. Supported versions are: v1, v4, v5'
+version: 0.5.0
+author: DeNix <denixport@gmail.com>
+
+environment:
+  sdk: '>=2.0.0-dev.50.0 <2.0.0'
+dependencies:
+  crypto: '>=0.9.2 <3.0.0'
+dev_dependencies:
+  test: '^0.12.0'
+  benchmark_harness: any
