@@ -1,8 +1,8 @@
 name: uuid_type
 description: 'RFC4122 UUID type, parser and generators. Supported versions are: v1, v4, v5'
-version: 0.5.1
+version: 0.5.1-dev
 author: DeNix <denixport@gmail.com>
-
+homepage: https://github.com/denixport/dart-uuid
 environment:
   sdk: '>=2.0.0-dev.50.0 <2.0.0'
 dependencies:
