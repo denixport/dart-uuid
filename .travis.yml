@@ -3,15 +3,12 @@ sudo: false
 dart:
   - dev
   - stable
+dart_task:
+  - test: --platform vm
+  - test: --platform firefox -j 1
+  - dartanalyzer: --fatal-warnings lib
+branches:
+  only: [master]
 cache:
   directories:
     - $HOME/.pub-cache
-dart_task:
-  - test: --platform vm
-  - test: --platform firefox
-  - dartanalyzer
-  - dartfmt
-matrix:
-  exclude:
-    - dart: dev
-      dart_task: dartfmt
