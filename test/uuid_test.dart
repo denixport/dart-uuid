@@ -194,15 +194,15 @@ void main() {
     });
 
     group('Nil', () {
-      test('Zero byte array creates Nil', () {
+      test('Zero byte array creates Nil UUID', () {
         expect(identical(testNil, Uuid.nil), true);
       });
 
-      test('Nil string creates Nil', () {
+      test('Nil string creates Nil UUID', () {
         expect(identical(new Uuid(uuidNsStrings['nil']), Uuid.nil), true);
       });
 
-      test('Nil strings are parsed to Nil', () {
+      test('Nil strings are parsed to Nil UUID', () {
         nilStrings.forEach((String source) {
           expect(identical(Uuid.parse(source), Uuid.nil), true);
         });
@@ -261,7 +261,7 @@ void main() {
         expect(Comparable.compare(dns, u) < 0, true);
       });
 
-      test('node comparison works', () {
+      test('Node comparison works', () {
         var ua = new Uuid('00000000-0000-1000-8000-100000000000');
         var ub = new Uuid('00000000-0000-1000-8000-010000000000');
 
@@ -269,6 +269,14 @@ void main() {
       });
 
       // todo(denix) compare versions <> 1
+
+      test('UUIDs with the same hashCode are equal', () {
+        var ua = new Uuid('00000000-0000-1000-8000-100000000000');
+        var ub = new Uuid('00000000-0000-1000-8000-100000000000');
+
+        expect(ua.hashCode == ub.hashCode, true);
+        expect(ua == ub, true);
+      });
     });
 
     group('Bytes', () {
