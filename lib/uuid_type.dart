@@ -9,7 +9,7 @@ library uuid_type;
 /// [RFC 4122](https://tools.ietf.org/html/rfc4122)
 
 export 'src/uuid.dart';
-//export 'src/generators.dart';
+export 'src/generators.dart';
 
 
 
