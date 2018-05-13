@@ -1,19 +1,37 @@
+// Copyright (c) 2018, Denis Portnov. All rights reserved.
+// Released under MIT License that can be found in the LICENSE file.
+
+library uuid_type;
+
 import 'dart:typed_data';
 import 'hex.dart';
 
 /// UUID variant according to RFC4122
 enum Variant {
-  ncs, // Reserved, NCS backward compatibility.
-  rfc4122, // The variant specified in RFC4122
-  microsoft, // Reserved, Microsoft Corporation backward compatibility.
-  future // Reserved for future definition
+  /// Reserved, NCS backward compatibility.
+  ncs,
+  /// The variant specified in RFC4122
+  rfc4122,
+  /// Reserved, Microsoft Corporation backward compatibility.
+  microsoft,
+  /// Reserved for future definition
+  future
 }
 
+/// This object represents an UUID, 128 bit Universal Unique IDentifier
+/// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
+  /// Nil UUID
+  /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
   static Uuid get nil => new Uuid.fromBytes(new Uint8List(16));
 
+  // Buffer for byte representation for all instances
   static final _byteBuffer = new Uint8List(16);
 
+  /// Creates a new [Uuid] from canonical string representation
+  ///
+  /// If argument is not a valid UUID string [FormatException] is thrown.
+  /// For parsing various UUID formats use [Uuid.parse]
   factory Uuid(String source) {
     assert(source != null);
 
@@ -43,25 +61,50 @@ abstract class Uuid implements Comparable<Uuid> {
     return new Uuid.fromBytes(_byteBuffer);
   }
 
+  /// Creates [Uuid] from byte array
+  ///
+  /// Optional [offset] is used to read 16 bytes of UUID from larger arrays
+  /// Could return [Uuid.nil] in case of zero byte array
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
+  /// Returns RFC [Variant]
   Variant get variant;
 
+  /// Returns UUID version
   int get version;
 
-  //Uint8List get bytes;
-
+  /// Returns hash code for this UUID
+  ///
+  /// Both [hashCode] and [operator ==] should be overridden to properly
+  /// represent UUID state
+  @override
   int get hashCode;
 
+  /// Compares this UUID to [Object] assuming it represents another UUID
+  @override
   bool operator ==(Object other);
 
+  /// Compares this UUID to another [Uuid]
+  ///
+  /// Comparison is done in lexicographical order
   int compareTo(Uuid other);
 
+  /// Returns byte representation of this UUID as [Uint8List]
   Uint8List toBytes();
 
+  /// Returns canonical string representation of this [Uuid]
   String toString();
 
+  /// Parses [source] as [Uuid]
   ///
+  /// Throws [FormatException] in case of invalid UUID representation
+  ///
+  /// The [source] must be in one of the following UUID formats
+  /// - Canonical string: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
+  /// - Hex string of 36 chars: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  /// - URN: urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
+  /// - Canonical GUID: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx}
+  /// - Hex GUID: {xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
   static Uuid parse(String source) {
     assert(source != null);
 
@@ -103,7 +146,10 @@ abstract class Uuid implements Comparable<Uuid> {
     }
   }
 
+  /// Parses [source] as [Uuid]
   ///
+  /// Like [parse] except that this function returns `null` for invalid inputs
+  //  instead of throwing.
   static Uuid tryParse(String source) {
     Uuid u;
     try {
@@ -117,6 +163,7 @@ abstract class Uuid implements Comparable<Uuid> {
 class _Uuid implements Uuid {
   static const nil = const _Uuid._(0, 0, 0, 0);
 
+  // UUID is stored as 4 x 32bit values
   final int x; // time_low
   final int y; // time_mid | time_hi_and_version
   final int z; // clk_seq_hi_res | clk_seq_low | node (0-1)
@@ -124,7 +171,7 @@ class _Uuid implements Uuid {
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
-  ///
+  /// Implements [Uuid.fromBytes]
   factory _Uuid.fromBytes(Uint8List bytes, [int offset = 0]) {
     assert(bytes != null);
 
@@ -146,7 +193,6 @@ class _Uuid implements Uuid {
     return new _Uuid._(x, y, z, w);
   }
 
-  ///
   Variant get variant {
     const variants = const <Variant>[
       Variant.ncs, // 0 0 0
@@ -162,10 +208,8 @@ class _Uuid implements Uuid {
     return variants[z >> 29];
   }
 
-  ///
   int get version => (y & 0xF000) >> 12;
 
-  //
   @override
   int get hashCode {
     const m = 0xC6A4A7935BD1E995;
@@ -193,7 +237,6 @@ class _Uuid implements Uuid {
     return hash;
   }
 
-  ///
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -206,8 +249,8 @@ class _Uuid implements Uuid {
     return false;
   }
 
-  ///
   int compareTo(Uuid other) {
+    // compare version first
     int diff = version - other.version;
     if (diff != 0) diff;
 
@@ -227,7 +270,7 @@ class _Uuid implements Uuid {
     return -1 * other.compareTo(this);
   }
 
-  ///
+  /// Implements [Uuid.toBytes]
   Uint8List toBytes() {
     var buffer = new Uint8List(16);
     buffer[0] = (x >> 24);
@@ -253,6 +296,7 @@ class _Uuid implements Uuid {
     return buffer;
   }
 
+  /// Buffer to hold 36 chars canonical string
   static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
     0,0,0,0,0,0,0,0,0x2D,
     0,0,0,0,0x2D,
@@ -261,7 +305,7 @@ class _Uuid implements Uuid {
     0,0,0,0,0,0,0,0,0,0,0,0
   ]);
 
-  ///
+  /// Implements [Uuid.toString]
   String toString() {
     var b = toBytes();
 
