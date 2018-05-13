@@ -5,6 +5,7 @@
 .buildlog
 build/
 doc/api/
+tmp/
 
 packages
 .packages
