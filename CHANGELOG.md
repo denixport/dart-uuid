@@ -1,10 +1,9 @@
 ## 0.6.0-dev
-- Refactor `toBytes()` method into `bytes` getter 
+- Refactored `toBytes()` method into `bytes` getter 
 
 ## 0.5.2-dev
 - More tests
 - Initial package documentation
 
 ## 0.5.1-dev
-
- Initial relase, and tests
+- Initial relase, and tests
