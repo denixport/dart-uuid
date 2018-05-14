@@ -1,5 +1,7 @@
-## 0.5.2-dev
+## 0.6.0-dev
+- Refactor `toBytes()` method into `bytes` getter 
 
+## 0.5.2-dev
 - More tests
 - Initial package documentation
 
