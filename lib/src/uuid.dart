@@ -301,31 +301,6 @@ class _Uuid implements Uuid {
     return -1 * other.compareTo(this);
   }
 
-  /// Implements [Uuid.toBytes]
-  Uint8List toBytes() {
-    var buffer = new Uint8List(16);
-    buffer[0] = (x >> 24);
-    buffer[1] = (x >> 16);
-    buffer[2] = (x >> 8);
-    buffer[3] = x;
-
-    buffer[4] = (y >> 24);
-    buffer[5] = (y >> 16);
-    buffer[6] = (y >> 8);
-    buffer[7] = y;
-
-    buffer[8] = (z >> 24);
-    buffer[9] = (z >> 16);
-    buffer[10] = (z >> 8);
-    buffer[11] = z;
-
-    buffer[12] = (w >> 24);
-    buffer[13] = (w >> 16);
-    buffer[14] = (w >> 8);
-    buffer[15] = w;
-
-    return buffer;
-  }
 
   /// Buffer to hold 36 chars canonical string
   static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
@@ -338,7 +313,7 @@ class _Uuid implements Uuid {
 
   /// Implements [Uuid.toString]
   String toString() {
-    var b = toBytes();
+    var b = this.bytes;
 
     _stringBuffer[0] = hexDigitsLower[b[0] >> 4];
     _stringBuffer[1] = hexDigitsLower[b[0] & 0x0F];
