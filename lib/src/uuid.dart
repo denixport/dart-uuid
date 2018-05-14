@@ -101,31 +101,33 @@ abstract class Uuid implements Comparable<Uuid> {
   static Uuid parse(String source) {
     assert(source != null);
 
-    if (source.length == 36) { // canonical
+    var s = source.trim();
+
+    if (s.length == 36) { // assume canonical
       return new Uuid(source);
-    } else if (source.length == 1 + 36 + 1) { //assume GUID
-      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
+    } else if (s.length == 1 + 36 + 1) { //assume GUID
+      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
         throw new FormatException('Invalid GUID string "$source"');
       }
-      return new Uuid(source.substring(1, source.length - 1));
-    } else if (source.length == 9 + 36) { // assume URN
-      if (! source.startsWith('urn:uuid:')) {
-        throw new FormatException('Invalid URN string "$source"');
+      return new Uuid(s.substring(1, s.length - 1));
+    } else if (s.length == 9 + 36) { // assume URN
+      if (! s.startsWith('urn:uuid:')) {
+        throw new FormatException('Invalid UUID URN string "$source"');
       }
       return new Uuid(source.substring(9));
-    } else if (source.length == 1 + 32 + 1) { // hex GUID
-      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
+    } else if (s.length == 1 + 32 + 1) { // hex GUID
+      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
         throw new FormatException('Invalid GUID string "$source"');
       }
-      source = source.substring(1, source.length - 1);
+      s = s.substring(1, s.length - 1);
     }
 
-    if (source.length != 32) {
+    if (s.length != 32) {
       throw new FormatException('Invalid UUID string "$source"');
     }
 
     // parse hex representation
-    var chars = source.codeUnits;
+    var chars = s.codeUnits;
     int pos = 0;
     try {
       for (int i = 0; i < 16; i++) {
