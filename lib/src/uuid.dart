@@ -4,29 +4,18 @@
 library uuid_type;
 
 import 'dart:typed_data';
-import 'hex.dart';
 
-/// UUID variant according to RFC4122
-enum Variant {
-  /// Reserved, NCS backward compatibility.
-  ncs,
-  /// The variant specified in RFC 4122
-  rfc4122,
-  /// Reserved, Microsoft Corporation backward compatibility.
-  microsoft,
-  /// Reserved for future definition
-  future
-}
+import 'hex.dart';
 
 /// This object represents an UUID, 128 bit Universal Unique IDentifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
+  static final _byteBuffer = new Uint8List(16);
+
+  // Buffer for byte representation for all instances
   /// Nil UUID
   /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
   static Uuid get nil => new Uuid.fromBytes(new Uint8List(16));
-
-  // Buffer for byte representation for all instances
-  static final _byteBuffer = new Uint8List(16);
 
   /// Creates a new [Uuid] from canonical string representation
   ///
@@ -67,14 +56,6 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Could return [Uuid.nil] in case of zero byte array
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
-  /// Returns [Variant] defined in
-  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.1)
-  Variant get variant;
-
-  /// Returns UUID version defined in
-  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
-  int get version;
-
   /// Returns representation of this [Uuid] as [Uint8List]
   /// The returned list is a copy, making it possible to change the list
   /// without affecting the [Uuid] instance.
@@ -86,6 +67,14 @@ abstract class Uuid implements Comparable<Uuid> {
   /// represent UUID state
   @override
   int get hashCode;
+
+  /// Returns [Variant] defined in
+  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.1)
+  Variant get variant;
+
+  /// Returns UUID version defined in
+  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
+  int get version;
 
   /// Compares this UUID to [Object] assuming it represents another UUID
   @override
@@ -163,17 +152,35 @@ abstract class Uuid implements Comparable<Uuid> {
   }
 }
 
+/// UUID variant according to RFC4122
+enum Variant {
+  /// Reserved, NCS backward compatibility.
+  ncs,
+  /// The variant specified in RFC 4122
+  rfc4122,
+  /// Reserved, Microsoft Corporation backward compatibility.
+  microsoft,
+  /// Reserved for future definition
+  future
+}
 
 class _Uuid implements Uuid {
   static const nil = const _Uuid._(0, 0, 0, 0);
+
+  // Buffer to hold 36 chars canonical string
+  static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
+    0,0,0,0,0,0,0,0,0x2D,
+    0,0,0,0,0x2D,
+    0,0,0,0,0x2D,
+    0,0,0,0,0x2D,
+    0,0,0,0,0,0,0,0,0,0,0,0
+  ]); // time_low
 
   // UUID is stored as 4 x 32bit values
   final int x; // time_low
   final int y; // time_mid | time_hi_and_version
   final int z; // clk_seq_hi_res | clk_seq_low | node (0-1)
   final int w; // node (2-5)
-
-  const _Uuid._(this.x, this.y, this.z, this.w);
 
   /// Implements [Uuid.fromBytes]
   factory _Uuid.fromBytes(Uint8List bytes, [int offset = 0]) {
@@ -197,24 +204,7 @@ class _Uuid implements Uuid {
     return new _Uuid._(x, y, z, w);
   }
 
-  Variant get variant {
-    assert((z >> 29) >= 0 && (z >> 29) <= 7);
-
-    const variants = const <Variant>[
-      Variant.ncs, // 0 0 0
-      Variant.ncs, // 0 0 1
-      Variant.ncs, // 0 1 0
-      Variant.ncs, // 0 1 1
-      Variant.rfc4122, // 1 0 0
-      Variant.rfc4122, // 1 0 1
-      Variant.microsoft, // 1 1 0
-      Variant.future, // 1 1 1
-    ];
-
-    return variants[z >> 29];
-  }
-
-  int get version => (y & 0xF000) >> 12;
+  const _Uuid._(this.x, this.y, this.z, this.w);
 
   Uint8List get bytes {
     var buffer = new Uint8List(16);
@@ -268,6 +258,25 @@ class _Uuid implements Uuid {
     return hash;
   }
 
+  Variant get variant {
+    assert((z >> 29) >= 0 && (z >> 29) <= 7);
+
+    const variants = const <Variant>[
+      Variant.ncs, // 0 0 0
+      Variant.ncs, // 0 0 1
+      Variant.ncs, // 0 1 0
+      Variant.ncs, // 0 1 1
+      Variant.rfc4122, // 1 0 0
+      Variant.rfc4122, // 1 0 1
+      Variant.microsoft, // 1 1 0
+      Variant.future, // 1 1 1
+    ];
+
+    return variants[z >> 29];
+  }
+
+  int get version => (y & 0xF000) >> 12;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -280,6 +289,7 @@ class _Uuid implements Uuid {
     return false;
   }
 
+  /// Implements [Comparable.compareTo] for [Uuid]
   int compareTo(Uuid other) {
     // compare version first
     int diff = version - other.version;
@@ -300,16 +310,6 @@ class _Uuid implements Uuid {
 
     return -1 * other.compareTo(this);
   }
-
-
-  /// Buffer to hold 36 chars canonical string
-  static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
-    0,0,0,0,0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0,0,0,0,0,0,0,0
-  ]);
 
   /// Implements [Uuid.toString]
   String toString() {
