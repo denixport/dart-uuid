@@ -10,7 +10,7 @@ import 'hex.dart';
 enum Variant {
   /// Reserved, NCS backward compatibility.
   ncs,
-  /// The variant specified in RFC4122
+  /// The variant specified in RFC 4122
   rfc4122,
   /// Reserved, Microsoft Corporation backward compatibility.
   microsoft,
@@ -67,11 +67,18 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Could return [Uuid.nil] in case of zero byte array
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
-  /// Returns RFC [Variant]
+  /// Returns [Variant] defined in
+  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.1)
   Variant get variant;
 
-  /// Returns UUID version
+  /// Returns UUID version defined in
+  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
   int get version;
+
+  /// Returns representation of this [Uuid] as [Uint8List]
+  /// The returned list is a copy, making it possible to change the list
+  /// without affecting the [Uuid] instance.
+  Uint8List get bytes;
 
   /// Returns hash code for this UUID
   ///
@@ -88,9 +95,6 @@ abstract class Uuid implements Comparable<Uuid> {
   ///
   /// Comparison is done in lexicographical order
   int compareTo(Uuid other);
-
-  /// Returns byte representation of this UUID as [Uint8List]
-  Uint8List toBytes();
 
   /// Returns canonical string representation of this [Uuid]
   String toString();
@@ -194,6 +198,8 @@ class _Uuid implements Uuid {
   }
 
   Variant get variant {
+    assert((z >> 29) >= 0 && (z >> 29) <= 7);
+
     const variants = const <Variant>[
       Variant.ncs, // 0 0 0
       Variant.ncs, // 0 0 1
@@ -209,6 +215,31 @@ class _Uuid implements Uuid {
   }
 
   int get version => (y & 0xF000) >> 12;
+
+  Uint8List get bytes {
+    var buffer = new Uint8List(16);
+    buffer[0] = (x >> 24);
+    buffer[1] = (x >> 16);
+    buffer[2] = (x >> 8);
+    buffer[3] = x;
+
+    buffer[4] = (y >> 24);
+    buffer[5] = (y >> 16);
+    buffer[6] = (y >> 8);
+    buffer[7] = y;
+
+    buffer[8] = (z >> 24);
+    buffer[9] = (z >> 16);
+    buffer[10] = (z >> 8);
+    buffer[11] = z;
+
+    buffer[12] = (w >> 24);
+    buffer[13] = (w >> 16);
+    buffer[14] = (w >> 8);
+    buffer[15] = w;
+
+    return buffer;
+  }
 
   @override
   int get hashCode {

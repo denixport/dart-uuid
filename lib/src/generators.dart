@@ -3,7 +3,7 @@
 
 library uuid_type.generators;
 
-import 'dart:convert';
+import 'dart:convert' show utf8;
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
@@ -18,24 +18,19 @@ class NameBasedUuidGenerator {
   /// [Hash] instance, only [hash.sha1] is allowed.
   final Hash hash;
 
-  /// Default namespace
-  // todo(denixport) check NS variant?
-  Uuid defaultNamespace;
+  /// UUID namespace
+  final Uuid namespace;
 
-  NameBasedUuidGenerator([this.defaultNamespace]) : this.hash = sha1;
+  NameBasedUuidGenerator(this.namespace) : this.hash = sha1;
 
   /// Generates namespace + name-based v5 UUID
   /// If [namespace] is not provided will use [defaultNamespace]
   /// If [defaultNamespace] is not set will throw [StateError]
-  Uuid generate(String name, [Uuid namespace]) {
+  Uuid generate(String name) {
     assert(name != null);
 
-    namespace ??= defaultNamespace;
-    if (namespace == null) {
-      throw new StateError('Namespace is not defined');
-    }
-
-    var h = hash.convert(namespace.toBytes() + utf8.encode(name)).bytes;
+    var h = hash.convert(namespace.bytes + utf8.encode(name)).bytes;
+    assert(h.length >= 16);
     for (int i = 0; i < 16; ++i) {
       _byteBuffer[i] = h[i];
     }

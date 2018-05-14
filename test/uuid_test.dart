@@ -149,7 +149,7 @@ void main() {
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
-        expect(u.toBytes(), equals(uuidBytes['ns-dns']));
+        expect(u.bytes, equals(uuidBytes['ns-dns']));
       });
 
       test('Byte array with slice length <> 16 throws', () {
@@ -283,15 +283,15 @@ void main() {
       test('Returns same bytes', () {
         uuidBytes.forEach((k, v) {
           var bytes = l2b(v);
-          expect(new Uuid.fromBytes(bytes).toBytes(), equals(bytes));
+          expect(new Uuid.fromBytes(bytes).bytes, equals(bytes));
         });
       });
 
       test('Buffer', () {
         var u1 = new Uuid.fromBytes(l2b(uuidBytes['ns-dns']));
         var u2 = new Uuid.fromBytes(l2b(uuidBytes['ns-url']));
-        expect(u2.toBytes(), equals(uuidBytes['ns-url']));
-        expect(u1.toBytes(), equals(uuidBytes['ns-dns']));
+        expect(u2.bytes, equals(uuidBytes['ns-url']));
+        expect(u1.bytes, equals(uuidBytes['ns-dns']));
       });
     });
 
