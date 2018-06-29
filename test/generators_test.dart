@@ -33,6 +33,10 @@ class RandomMock implements Random {
 }
 
 void main() {
+  group('Time-based generator (v1)', () {
+
+  });
+
   group('Random-based generator (v4)', () {
     test('Generates v4 UUID with correct variant and version', () {
       var gen = new RandomUuidGenerator();
