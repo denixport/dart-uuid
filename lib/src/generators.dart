@@ -7,12 +7,10 @@ import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List;
 import 'package:crypto/crypto.dart' show Hash, sha1;
-import 'node.dart';
 import 'uuid.dart';
 
-
 final Uint8List _byteBuffer = new Uint8List(16);
-final _rng = new Random.secure();
+final Random _rng = new Random.secure();
 
 ///
 class TimeBasedUuidGenerator {
@@ -21,54 +19,43 @@ class TimeBasedUuidGenerator {
   int _ms;
   int _ns;
   int _clkSeq;
-  final NodeId _node;
+  final Uint8List _node;
 
-  TimeBasedUuidGenerator([NodeId nodeId, int clockSequence])
+  TimeBasedUuidGenerator([Uint8List nodeId, int clockSequence])
       : this._ms = 0,
         this._ns = 0,
         this._clkSeq = clockSequence ?? _rng.nextInt(1 << 14),
-        this._node = nodeId ?? _randomNode();
+        this._node = nodeId ?? _randomNodeBytes();
 
   TimeBasedUuidGenerator.random()
       : this._ms = 0,
         this._ns = 0,
         this._clkSeq = _rng.nextInt(1 << 14),
-        this._node = _randomNode();
+        this._node = _randomNodeBytes();
 
 
+  // @todo
   factory TimeBasedUuidGenerator.fromUuidState(Uuid state) {
     if (state.version != 1) {
       throw ArgumentError('Invalid version for time-based UUID');
     }
+    throw UnimplementedError();
   }
-  /*
-    : this._ms = _getUuidMs(state),
-      this._ns = _getUuidNs(state),
-      this._clkSeq = _getUuidClkSeq(state),
-      this._node = new NodeId.fromBytes(state.bytes, 10);
 
-  static int _getUuidMs(Uuid state) {
-    return 0;
-  }
-  static int _getUuidNs(Uuid state) {
-    return 0;
-  }
-  static int _getUuidClkSeq(Uuid state) {
-    return 0;
-  }
-  */
 
-  static NodeId _randomNode() {
+  static Uint8List _randomNodeBytes() {
+    var nb = new Uint8List(6);
+
     var u = _rng.nextInt(0xFFFFFFFF);
-    _byteBuffer[10] = (u >> 24) | 0x01; // | multicast bit
-    _byteBuffer[11] = u >> 16;
-    _byteBuffer[12] = u >> 8;
-    _byteBuffer[13] = u;
+    nb[0] = (u >> 24) | 0x01; // | multicast bit
+    nb[1] = u >> 16;
+    nb[2] = u >> 8;
+    nb[3] = u;
     u = _rng.nextInt(0xFFFF);
-    _byteBuffer[14] = u >> 8;
-    _byteBuffer[15] = u;
+    nb[4] = u >> 8;
+    nb[5] = u;
 
-    return new NodeId.fromBytes(_byteBuffer, 10);
+    return nb;
   }
 
   Uuid generate() {
@@ -102,9 +89,8 @@ class TimeBasedUuidGenerator {
     _byteBuffer[8] = _clkSeq >> 8;
     _byteBuffer[9] = _clkSeq;
 
-    var nodeBytes = _node.bytes;
     for (var i = 10; i < 16; i++) {
-      _byteBuffer[i] = nodeBytes[i-10];
+      _byteBuffer[i] = _node[i-10];
     }
 
     _byteBuffer[8] = (_byteBuffer[8] & 0x3F) | 0x80; // variant 1
