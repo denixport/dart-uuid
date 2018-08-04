@@ -277,6 +277,12 @@ void main() {
         expect(ua.hashCode == ub.hashCode, true);
         expect(ua == ub, true);
       });
+
+      test('hashCode doesn\'t overflow', () {
+        var u = new Uuid('ffffffff-ffff-50ff-bfff-ffffffffffff');
+        expect(u.hashCode.toString() == '-207460741923146079', true);
+      });
+
     });
 
     group('Bytes', () {

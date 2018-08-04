@@ -235,22 +235,34 @@ class _Uuid implements Uuid {
 
   @override
   int get hashCode {
-    const m = 0xC6A4A7935BD1E995;
-    const n = m * 16;
-    const r = 47;
+    const m = 0x5BD1E995;
+    const n = 16;
+    const r = 24;
 
     int hash = n;
 
-    int k = (x << 28) | (y & 0x0F);
-    k *= m;
+    int k = x * m;
     k ^= k >> r;
     k *= m;
 
     hash ^= k;
     hash *= m;
 
-    k = ((z & 0x3F) << 28) | w;
+    k = y * m;
+    k ^= k >> r;
     k *= m;
+
+    hash ^= k;
+    hash *= m;
+
+    k = z * m;
+    k ^= k >> r;
+    k *= m;
+
+    hash ^= k;
+    hash *= m;
+
+    k = w * m;
     k ^= k >> r;
     k *= m;
 
