@@ -10,9 +10,9 @@ import 'hex.dart';
 /// This object represents an UUID, 128 bit Universal Unique IDentifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
+  /// Shared buffer for byte representation for all instances
   static final _byteBuffer = new Uint8List(16);
 
-  // Buffer for byte representation for all instances
   /// Nil UUID
   /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
   static Uuid get nil => new Uuid.fromBytes(new Uint8List(16));

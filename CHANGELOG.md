@@ -1,3 +1,6 @@
+## 0.7.0-dev
+- Dart 2 is a minimum required version 
+
 ## 0.6.0-dev
 - Refactored `toBytes()` method into `bytes` getter 
 
