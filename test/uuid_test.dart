@@ -264,18 +264,18 @@ void main() {
       test('Node comparison works', () {
         var ua = new Uuid('00000000-0000-1000-8000-100000000000');
         var ub = new Uuid('00000000-0000-1000-8000-010000000000');
-
         expect(Comparable.compare(ua, ub) > 0, true);
       });
 
-      // todo(denix) compare versions <> 1
-
-      test('UUIDs with the same hashCode are equal', () {
+      test('Same UUIDs khave same hashCode', () {
         var ua = new Uuid('00000000-0000-1000-8000-100000000000');
         var ub = new Uuid('00000000-0000-1000-8000-100000000000');
-
         expect(ua.hashCode == ub.hashCode, true);
-        expect(ua == ub, true);
+      });
+
+      test('hashCode doesn\'t overflow', () {
+        var u = new Uuid('ffffffff-ffff-50ff-bfff-ffffffffffff');
+        expect(u.hashCode == 1073786624, true);
       });
     });
 

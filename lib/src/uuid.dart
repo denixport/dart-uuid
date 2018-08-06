@@ -3,25 +3,14 @@
 
 library uuid_type;
 
-import 'dart:typed_data' show Uint8List;
-import 'hex.dart';
+import 'dart:typed_data';
 
-/// UUID variant according to RFC4122
-enum Variant {
-  /// Reserved, NCS backward compatibility.
-  ncs,
-  /// The variant specified in RFC 4122
-  rfc4122,
-  /// Reserved, Microsoft Corporation backward compatibility.
-  microsoft,
-  /// Reserved for future definition
-  future
-}
+import 'hex.dart';
 
 /// This object represents an UUID, 128 bit Universal Unique IDentifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
-  // Shared buffer for UUID byte representation
+  /// Shared buffer for byte representation for all instances
   static final _byteBuffer = new Uint8List(16);
 
   /// Nil UUID
@@ -157,18 +146,30 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Like [parse] except that this function returns `null` for invalid inputs
   //  instead of throwing.
   static Uuid tryParse(String source) {
+    Uuid u;
     try {
-      return Uuid.parse(source);
-    } on FormatException {
-      return null;
-    }
+      u = Uuid.parse(source);
+    } catch (e) {}
+    return u;
   }
+}
+
+/// UUID variant according to RFC4122
+enum Variant {
+  /// Reserved, NCS backward compatibility.
+  ncs,
+  /// The variant specified in RFC 4122
+  rfc4122,
+  /// Reserved, Microsoft Corporation backward compatibility.
+  microsoft,
+  /// Reserved for future definition
+  future
 }
 
 class _Uuid implements Uuid {
   static const nil = const _Uuid._(0, 0, 0, 0);
 
-  // Shared buffer for 36 chars canonical string
+  // Buffer to hold 36 chars canonical string
   static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
     0,0,0,0,0,0,0,0,0x2D,
     0,0,0,0,0x2D,
@@ -177,7 +178,7 @@ class _Uuid implements Uuid {
     0,0,0,0,0,0,0,0,0,0,0,0
   ]); // time_low
 
-  // UUID is stored as 4 x 32bit int values
+  // UUID is stored as 4 x 32bit values
   final int x; // time_low
   final int y; // time_mid | time_hi_and_version
   final int z; // clk_seq_hi_res | clk_seq_low | node (0-1)
@@ -188,7 +189,6 @@ class _Uuid implements Uuid {
     assert(bytes != null);
 
     if (offset + 16 > bytes.length) {
-      // @todo
       throw new ArgumentError();
     }
 
@@ -208,7 +208,6 @@ class _Uuid implements Uuid {
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
-  ///
   Uint8List get bytes {
     var buffer = new Uint8List(16);
     buffer[0] = (x >> 24);
@@ -236,29 +235,7 @@ class _Uuid implements Uuid {
 
   @override
   int get hashCode {
-    const m = 0xC6A4A7935BD1E995;
-    const n = m * 16;
-    const r = 47;
-
-    int hash = n;
-
-    int k = (x << 28) | (y & 0x0F);
-    k *= m;
-    k ^= k >> r;
-    k *= m;
-
-    hash ^= k;
-    hash *= m;
-
-    k = ((z & 0x3F) << 28) | w;
-    k *= m;
-    k ^= k >> r;
-    k *= m;
-
-    hash ^= k;
-    hash *= m;
-
-    return hash;
+    return (x ^ y) ^ (z ^ w);
   }
 
   Variant get variant {
