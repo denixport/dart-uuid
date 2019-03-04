@@ -1,11 +1,11 @@
 name: uuid_type
-description: 'UUID type, parser and generators. Supported versions are: v1, v4, v5'
-version: 0.7.0-dev
+description: 'UUID type, parser and generators. Supported RFC versions are: v1, v4, v5'
+version: 0.9.0-dev
 author: Denis Portnov <denixport@gmail.com>
 uploader: Denis Portnov <denixport@gmail.com>
 homepage: https://github.com/denixport/dart-uuid
 environment:
-  sdk: '>=2.0.0-dev.61.0 <3.0.0'
+  sdk: '>=2.0.0 <3.0.0'
 dependencies:
   crypto: '>=2.0.0 <3.0.0'
 dev_dependencies:
