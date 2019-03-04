@@ -34,11 +34,12 @@ class TimeBasedUuidGenerator {
         this._node = _randomNodeBytes();
 
 
-  // @todo
-  factory TimeBasedUuidGenerator.fromUuidState(Uuid state) {
-    if (state.version != 1) {
+  // TODO:
+  factory TimeBasedUuidGenerator.fromLastUuid(Uuid uuid) {
+    if (uuid.version != 1) {
       throw ArgumentError('Invalid version for time-based UUID');
     }
+
     throw UnimplementedError();
   }
 
@@ -46,7 +47,7 @@ class TimeBasedUuidGenerator {
   static Uint8List _randomNodeBytes() {
     var nb = new Uint8List(6);
 
-    var u = _rng.nextInt(0xFFFFFFFF);
+    int u = _rng.nextInt(0xFFFFFFFF);
     nb[0] = (u >> 24) | 0x01; // | multicast bit
     nb[1] = u >> 16;
     nb[2] = u >> 8;
@@ -136,7 +137,7 @@ class NameBasedUuidGenerator {
 }
 
 /// Generator for random-based UUIDs (v4)
-class RandomUuidGenerator {
+class RandomBasedUuidGenerator {
   // Random number generator
   final Random rng;
 
@@ -144,7 +145,7 @@ class RandomUuidGenerator {
   ///
   /// By default it uses secure random generator provided by [math]
   /// [math.Random] can be provided as custom RNG
-  RandomUuidGenerator([Random rng]) : this.rng = rng ?? _rng;
+  RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? _rng;
 
   /// Generates random UUID
   Uuid generate() {
