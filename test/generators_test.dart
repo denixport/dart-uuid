@@ -39,7 +39,7 @@ void main() {
 
   group('Random-based generator (v4)', () {
     test('Generates v4 UUID with correct variant and version', () {
-      var gen = new RandomUuidGenerator();
+      var gen = new RandomBasedUuidGenerator();
       var uuid = gen.generate();
 
       expect(uuid.variant, Variant.rfc4122);
@@ -50,7 +50,7 @@ void main() {
       var expected = new Uuid.fromBytes(new Uint8List.fromList(randSample));
 
       var rnd = new RandomMock(Uint32x4);
-      var uuid = new RandomUuidGenerator(rnd).generate();
+      var uuid = new RandomBasedUuidGenerator(rnd).generate();
 
       expect(uuid == expected, true);
     });
