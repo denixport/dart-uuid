@@ -8,8 +8,5 @@ library uuid_type;
 /// and generate various types of UUID as defined in
 /// [RFC 4122](https://tools.ietf.org/html/rfc4122)
 
-export 'src/uuid.dart';
 export 'src/generators.dart';
-
-
-
+export 'src/uuid.dart';

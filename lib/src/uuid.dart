@@ -4,7 +4,6 @@
 library uuid_type;
 
 import 'dart:typed_data';
-
 import 'hex.dart';
 
 /// UUID variant according to RFC4122
@@ -22,7 +21,7 @@ enum Variant {
   future
 }
 
-/// This object represents an UUID, 128 bit Universal Unique IDentifier
+/// This object represents an UUID, 128 bit Universal Unique Identifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
   /// Shared buffer for byte representation for all instances
@@ -59,10 +58,6 @@ abstract class Uuid implements Comparable<Uuid> {
   /// without affecting the [Uuid] instance.
   Uint8List get bytes;
 
-  /// Returns hash code for this UUID
-  ///
-  /// Both [hashCode] and [operator ==] should be overridden to properly
-  /// represent UUID state
   @override
   int get hashCode;
 
@@ -74,7 +69,6 @@ abstract class Uuid implements Comparable<Uuid> {
   /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
   int get version;
 
-  /// Compares this UUID to [Object] assuming it represents another UUID
   @override
   bool operator ==(Object other);
 
@@ -140,17 +134,20 @@ abstract class Uuid implements Comparable<Uuid> {
     var s = source.trim();
     if (s.length == 36) {
       return _parseCanonical(source);
-    } else if (s.length == 1 + 36 + 1) { // assume GUID
+    } else if (s.length == 1 + 36 + 1) {
+      // assume GUID
       if (!(s[0] == '{' && s[s.length - 1] == '}')) {
         return new FormatException("Invalid GUID string", source);
       }
       return _parseCanonical(s.substring(1, s.length - 1));
-    } else if (s.length == 9 + 36) { // assume URN
+    } else if (s.length == 9 + 36) {
+      // assume URN
       if (!s.startsWith('urn:uuid:')) {
         return new FormatException("Invalid UUID URN string", source);
       }
       return _parseCanonical(source.substring(9));
-    } else if (s.length == 1 + 32 + 1) { // hex GUID
+    } else if (s.length == 1 + 32 + 1) {
+      // hex GUID
       if (!(s[0] == '{' && s[s.length - 1] == '}')) {
         return new FormatException("Invalid GUID string", source);
       }
@@ -173,6 +170,7 @@ abstract class Uuid implements Comparable<Uuid> {
 
       _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
     }
+    return null;
   }
 }
 
@@ -291,7 +289,6 @@ class _Uuid implements Uuid {
     return false;
   }
 
-  /// Implements [Comparable.compareTo] for [Uuid]
   int compareTo(Uuid other) {
     // compare version first
     int diff = version - other.version;
@@ -313,7 +310,6 @@ class _Uuid implements Uuid {
     return -1 * other.compareTo(this);
   }
 
-  /// Implements [Uuid.toString]
   String toString() {
     var b = this.bytes;
 

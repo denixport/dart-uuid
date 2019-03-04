@@ -104,7 +104,7 @@ class TimeBasedUuidGenerator {
 /// Generator for namespace and name-based UUIDs (v5)
 /// Only SHA1 algo is supported, MD5 is deprecated
 class NameBasedUuidGenerator {
-  /// [Hash] instance, only [hash.sha1] is allowed.
+  /// `Hash` instance, only `hash.sha1` is allowed.
   final Hash hash;
 
   /// UUID namespace
@@ -113,8 +113,6 @@ class NameBasedUuidGenerator {
   NameBasedUuidGenerator(this.namespace) : this.hash = sha1;
 
   /// Generates namespace + name-based v5 UUID
-  /// If [namespace] is not provided will use [defaultNamespace]
-  /// If [defaultNamespace] is not set will throw [StateError]
   Uuid generate(String name) {
     assert(name != null);
 
@@ -143,8 +141,8 @@ class RandomBasedUuidGenerator {
 
   /// Creates instance of generator
   ///
-  /// By default it uses secure random generator provided by [math]
-  /// [math.Random] can be provided as custom RNG
+  /// By default it uses secure random generator provided by `math`
+  /// `math.Random` can be provided as custom RNG
   RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? _rng;
 
   /// Generates random UUID
