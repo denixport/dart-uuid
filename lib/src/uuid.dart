@@ -11,10 +11,13 @@ import 'hex.dart';
 enum Variant {
   /// Reserved, NCS backward compatibility.
   ncs,
+
   /// The variant specified in RFC 4122
   rfc4122,
+
   /// Reserved, Microsoft Corporation backward compatibility.
   microsoft,
+
   /// Reserved for future definition
   future
 }
@@ -36,26 +39,11 @@ abstract class Uuid implements Comparable<Uuid> {
   factory Uuid(String source) {
     if (source.length != 36) {
       throw new FormatException(
-        "UUID string has invalid length (${source.length})", source
-      );
+          "UUID string has invalid length (${source.length})", source);
     }
 
-    const bytePositions = const <int>[
-      0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34
-    ];
-
-    var chars = source.codeUnits;
-    int i = 0;
-
-    try {
-      for (int pos in bytePositions) {
-        _byteBuffer[i] = hexBytes[chars[pos]-0x30] << 4 |
-          hexBytes[chars[pos+1]-0x30];
-        i++;
-      }
-    } catch (e) {
-      throw new FormatException("Invalid UUID string", source, i);
-    }
+    var e = _parseCanonical(source);
+    if (e != null) throw e;
 
     return new Uuid.fromBytes(_byteBuffer);
   }
@@ -109,66 +97,83 @@ abstract class Uuid implements Comparable<Uuid> {
   /// - Canonical GUID: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx}
   /// - Hex GUID: {xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
   static Uuid parse(String source) {
-    FormatException e;
-    var uuid = _parse(source, e);
-    if (uuid == null) throw e;
-    return uuid;
+    var e = _parse(source);
+    if (e != null) throw e;
+    return new Uuid.fromBytes(_byteBuffer);
   }
 
   /// Parses [source] as [Uuid]
   ///
-  /// Like [parse] except that this function returns `null` for invalid inputs
+  /// Like [parse] except it returns `null` for invalid inputs
   //  instead of throwing.
   static Uuid tryParse(String source) {
-    FormatException e;
-    var uuid = _parse(source, e);
-    return uuid;
+    var e = _parse(source);
+    if (e != null) return null;
+    return new Uuid.fromBytes(_byteBuffer);
   }
 
-  static Uuid _parse(String source, FormatException e) {
+  ///
+  static FormatException _parseCanonical(String source) {
+    const bytePositions = const <int>[
+      0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
+    ];
+
+    var chars = source.codeUnits;
+    int a, b;
+    int i = 0;
+    for (int pos in bytePositions) {
+      a = chars[pos] - 0x30;
+      b = chars[pos + 1] - 0x30;
+      if (a >= hexBytes.length || b >= hexBytes.length) {
+        return new FormatException("Invalid UUID string", source, pos);
+      }
+
+      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
+      i++;
+    }
+
+    return null;
+  }
+
+  ///
+  static FormatException _parse(String source) {
     var s = source.trim();
-    if (s.length == 36) { // assume canonical
-      return new Uuid(source);
+    if (s.length == 36) {
+      return _parseCanonical(source);
     } else if (s.length == 1 + 36 + 1) { // assume GUID
       if (!(s[0] == '{' && s[s.length - 1] == '}')) {
-        e = new FormatException("Invalid GUID string", source);
-        return null;
+        return new FormatException("Invalid GUID string", source);
       }
-      return new Uuid(s.substring(1, s.length - 1));
+      return _parseCanonical(s.substring(1, s.length - 1));
     } else if (s.length == 9 + 36) { // assume URN
-      if (! s.startsWith('urn:uuid:')) {
-        e = new FormatException("Invalid UUID URN string", source);
-        return null;
+      if (!s.startsWith('urn:uuid:')) {
+        return new FormatException("Invalid UUID URN string", source);
       }
-      return new Uuid(source.substring(9));
+      return _parseCanonical(source.substring(9));
     } else if (s.length == 1 + 32 + 1) { // hex GUID
       if (!(s[0] == '{' && s[s.length - 1] == '}')) {
-        e = new FormatException("Invalid GUID string", source);
-        return null;        
+        return new FormatException("Invalid GUID string", source);
       }
       s = s.substring(1, s.length - 1);
+    }
 
-      if (s.length != 32) {
-        e = new FormatException("Invalid UUID string", source);
-        return null; 
+    if (s.length != 32) {
+      return new FormatException("Invalid UUID string", source);
+    }
+
+    // parse hex representation
+    var chars = s.codeUnits;
+    int a, b;
+    for (int i = 0; i < 16; i++) {
+      a = chars[2 * i] - 0x30;
+      b = chars[2 * i + 1] - 0x30;
+      if (a >= hexBytes.length || b >= hexBytes.length) {
+        return new FormatException("Invalid UUID string", source, i);
       }
 
-      // parse hex representation
-      var chars = s.codeUnits;
-      int pos = 0;
-      try {
-        for (int i = 0; i < 16; i++) {
-          _byteBuffer[i] =
-            hexBytes[chars[pos]-0x30] << 4 | hexBytes[chars[pos+1]-0x30];
-          pos += 2;
-        }
-        return new Uuid.fromBytes(_byteBuffer);
-      } catch (ex) {
-        e = new FormatException("Invalid UUID string", source);
-        return null; 
-      }      
-    }    
-  } 
+      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
+    }
+  }
 }
 
 ///
@@ -177,11 +182,11 @@ class _Uuid implements Uuid {
 
   // Buffer to hold 36 chars of canonical string representation
   static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
-    0,0,0,0,0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0x2D,
-    0,0,0,0,0,0,0,0,0,0,0,0
+    0, 0, 0, 0, 0, 0, 0, 0, 0x2D, //
+    0, 0, 0, 0, 0x2D,
+    0, 0, 0, 0, 0x2D,
+    0, 0, 0, 0, 0x2D,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ]); // time_low
 
   // UUID is stored as 4 x 32bit values
@@ -198,14 +203,22 @@ class _Uuid implements Uuid {
       throw new ArgumentError('Invalid offset');
     }
 
-    int x = (bytes[offset] << 24) | (bytes[offset + 1] << 16) |
-      (bytes[offset + 2] << 8) | bytes[offset + 3];
-    int y = (bytes[offset + 4] << 24) | (bytes[offset + 5] << 16) |
-      (bytes[offset + 6] << 8) | bytes[offset + 7];
-    int z = (bytes[offset + 8] << 24) | (bytes[offset + 9] << 16) |
-      (bytes[offset + 10] << 8) | bytes[offset + 11];
-    int w = (bytes[offset + 12] << 24) | (bytes[offset + 13] << 16) |
-      (bytes[offset + 14] << 8) | bytes[offset + 15];
+    int x = (bytes[offset] << 24) |
+        (bytes[offset + 1] << 16) |
+        (bytes[offset + 2] << 8) |
+        bytes[offset + 3];
+    int y = (bytes[offset + 4] << 24) |
+        (bytes[offset + 5] << 16) |
+        (bytes[offset + 6] << 8) |
+        bytes[offset + 7];
+    int z = (bytes[offset + 8] << 24) |
+        (bytes[offset + 9] << 16) |
+        (bytes[offset + 10] << 8) |
+        bytes[offset + 11];
+    int w = (bytes[offset + 12] << 24) |
+        (bytes[offset + 13] << 16) |
+        (bytes[offset + 14] << 8) |
+        bytes[offset + 15];
 
     if (y == 0 && z == 0 && x == 0 && w == 0) return nil;
 
@@ -266,8 +279,11 @@ class _Uuid implements Uuid {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other is _Uuid && this.x == other.x &&
-      this.y == other.y && this.z == other.z && this.w == other.w) {
+    if (other is _Uuid &&
+        this.x == other.x &&
+        this.y == other.y &&
+        this.z == other.z &&
+        this.w == other.w) {
       return true;
     } else if (other is Uuid) {
       return compareTo(other) == 0;
