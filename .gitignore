@@ -7,6 +7,5 @@ build/
 doc/api/
 tmp/
 
-packages
 .packages
 pubspec.lock
