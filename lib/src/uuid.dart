@@ -101,8 +101,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Like [parse] except it returns `null` for invalid inputs
   //  instead of throwing.
   static Uuid tryParse(String source) {
-    var e = _parse(source);
-    if (e != null) return null;
+    if (_parse(source) != null) return null;
     return new Uuid.fromBytes(_byteBuffer);
   }
 
@@ -111,70 +110,102 @@ abstract class Uuid implements Comparable<Uuid> {
     const bytePositions = const <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
     ];
+    const dashPositions = const <int>[8, 13, 18, 23];
 
     var chars = source.codeUnits;
-    int a, b;
-    int i = 0;
-    for (int pos in bytePositions) {
-      a = chars[pos] - 0x30;
-      b = chars[pos + 1] - 0x30;
-      if (a >= hexBytes.length || b >= hexBytes.length) {
+
+    int pos;
+
+    // check '-' positions
+    for (pos in dashPositions) {
+      if (chars[pos] != 0x2D) {
         return new FormatException("Invalid UUID string", source, pos);
       }
+    }
 
-      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
-      i++;
+    int n0, n1;
+    for (int i = 0; i < 16; i++) {
+      n0 = charToNibble(chars[bytePositions[i]]);
+      if (n0 == -1) {
+        return new FormatException("Invalid char in UUID string", source, pos);
+      }
+
+      n1 = charToNibble(chars[bytePositions[i] + 1]);
+      if (n1 == -1) {
+        return new FormatException(
+            "Invalid char in UUID string", source, pos + 1);
+      }
+      _byteBuffer[i] = n0 << 4 | n1;
     }
 
     return null;
   }
 
-  ///
+  /// Fills [_byteBuffer] with bytes decoded from hex
   static FormatException _parse(String source) {
-    var s = source.trim();
-    if (s.length == 36) {
+    if (source.length == 36) {
       return _parseCanonical(source);
-    } else if (s.length == 1 + 36 + 1) {
-      // assume GUID
-      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
+    } else if (source.length == 1 + 36 + 1) {
+      // GUID
+      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
         return new FormatException("Invalid GUID string", source);
       }
-      return _parseCanonical(s.substring(1, s.length - 1));
-    } else if (s.length == 9 + 36) {
-      // assume URN
-      if (!s.startsWith('urn:uuid:')) {
+      return _parseCanonical(source.substring(1, source.length - 1));
+    } else if (source.length == 1 + 32 + 1) {
+      // hex GUID
+      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
+        return new FormatException("Invalid GUID string", source);
+      }
+      source = source.substring(1, source.length - 1);
+    } else if (source.length == 9 + 36) {
+      // URN
+      if (!source.startsWith('urn:uuid:')) {
         return new FormatException("Invalid UUID URN string", source);
       }
       return _parseCanonical(source.substring(9));
-    } else if (s.length == 1 + 32 + 1) {
-      // hex GUID
-      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
-        return new FormatException("Invalid GUID string", source);
-      }
-      s = s.substring(1, s.length - 1);
     }
 
-    if (s.length != 32) {
-      return new FormatException("Invalid UUID string", source);
+    if (source.length != 32) {
+      return new FormatException("Invalid UUID hex string", source);
     }
 
-    // parse hex representation
-    var chars = s.codeUnits;
-    int a, b;
+    // parse hex
+    var chars = source.codeUnits;
+    int n0, n1;
     for (int i = 0; i < 16; i++) {
-      a = chars[2 * i] - 0x30;
-      b = chars[2 * i + 1] - 0x30;
-      if (a >= hexBytes.length || b >= hexBytes.length) {
-        return new FormatException("Invalid UUID string", source, i);
+      n0 = charToNibble(chars[2 * i]);
+      if (n0 == -1) {
+        return new FormatException("Invalid char in UUID string", source, i);
       }
 
-      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
+      n1 = charToNibble(chars[2 * i + 1]);
+      if (n1 == -1) {
+        return new FormatException(
+            "Invalid char in UUID string", source, i + 1);
+      }
+
+      _byteBuffer[i] = n0 << 4 | n1;
+      /*
+      c0 = chars[2 * i] - 0x30;
+      c1 = chars[2 * i + 1] - 0x30;
+
+      if (!(c0 >= 0 && c0 < hexBytes.length) ||
+          (hexBytes[c0] == 0 && c0 != 0)) {
+        return new FormatException("Invalid UUID string c0", source, i);
+      }
+      if (!(c1 >= 0 && c1 < hexBytes.length) ||
+          (hexBytes[c1] == 0 && c1 != 0)) {
+        return new FormatException("Invalid UUID string c1", source, i + 1);
+      }
+
+      _byteBuffer[i] = hexBytes[c0] << 4 | hexBytes[c1];
+      */
     }
+
     return null;
   }
 }
 
-///
 class _Uuid implements Uuid {
   static const nil = const _Uuid._(0, 0, 0, 0);
 
@@ -225,7 +256,13 @@ class _Uuid implements Uuid {
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
-  Uint8List get bytes {
+  Uint8List get bytes => new Uint8List.fromList(<int>[
+        x >> 24, x >> 16, x >> 8, x, //
+        y >> 24, y >> 16, y >> 8, y,
+        z >> 24, z >> 16, z >> 8, z,
+        w >> 24, w >> 16, w >> 8, w,
+      ]);
+  /*
     var buffer = new Uint8List(16);
     buffer[0] = (x >> 24);
     buffer[1] = (x >> 16);
@@ -248,8 +285,9 @@ class _Uuid implements Uuid {
     buffer[15] = w;
 
     return buffer;
-  }
 
+  }
+    */
   @override
   int get hashCode {
     return (x ^ y) ^ (z ^ w);

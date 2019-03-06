@@ -82,7 +82,7 @@ const invalidStrings = const <String>[
   '6ba7b811-9dad-11d1-80b4-00c04fd430',
   // too long
   '6ba7b811-9dad-11d1-80b4-00c04fd430000',
-  // extra markup
+  // extra dashes
   '6ba7b811-9dad-11d1-80b4-00c0-4fd43000',
   // invalid URN
   'urn uuid 6ba7b811-9dad-11d1-80b4-00c04fd430c8',
