@@ -72,6 +72,14 @@ abstract class Uuid implements Comparable<Uuid> {
   @override
   bool operator ==(Object other);
 
+  bool operator >(Uuid other);
+
+  bool operator >=(Uuid other);
+
+  bool operator <(Uuid other);
+
+  bool operator <=(Uuid other);
+
   /// Compares this UUID to another [Uuid]
   ///
   /// Comparison is done in lexicographical order
@@ -262,36 +270,8 @@ class _Uuid implements Uuid {
         z >> 24, z >> 16, z >> 8, z,
         w >> 24, w >> 16, w >> 8, w,
       ]);
-  /*
-    var buffer = new Uint8List(16);
-    buffer[0] = (x >> 24);
-    buffer[1] = (x >> 16);
-    buffer[2] = (x >> 8);
-    buffer[3] = x;
 
-    buffer[4] = (y >> 24);
-    buffer[5] = (y >> 16);
-    buffer[6] = (y >> 8);
-    buffer[7] = y;
-
-    buffer[8] = (z >> 24);
-    buffer[9] = (z >> 16);
-    buffer[10] = (z >> 8);
-    buffer[11] = z;
-
-    buffer[12] = (w >> 24);
-    buffer[13] = (w >> 16);
-    buffer[14] = (w >> 8);
-    buffer[15] = w;
-
-    return buffer;
-
-  }
-    */
-  @override
-  int get hashCode {
-    return (x ^ y) ^ (z ^ w);
-  }
+  int get hashCode => (x ^ y) ^ (z ^ w);
 
   Variant get variant {
     assert((z >> 29) >= 0 && (z >> 29) <= 7);
@@ -312,7 +292,6 @@ class _Uuid implements Uuid {
 
   int get version => (y & 0xF000) >> 12;
 
-  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is _Uuid &&
@@ -326,6 +305,11 @@ class _Uuid implements Uuid {
     }
     return false;
   }
+
+  bool operator >(Uuid other) => compareTo(other) > 0;
+  bool operator >=(Uuid other) => compareTo(other) >= 0;
+  bool operator <(Uuid other) => compareTo(other) < 0;
+  bool operator <=(Uuid other) => compareTo(other) <= 0;
 
   int compareTo(Uuid other) {
     // compare version first
@@ -349,44 +333,42 @@ class _Uuid implements Uuid {
   }
 
   String toString() {
-    var b = this.bytes;
+    _stringBuffer[0] = hexDigitsLower[((x >> 24) & 0xFF) >> 4];
+    _stringBuffer[1] = hexDigitsLower[(x >> 24) & 0x0F];
+    _stringBuffer[2] = hexDigitsLower[((x >> 16) & 0xFF) >> 4];
+    _stringBuffer[3] = hexDigitsLower[(x >> 16) & 0x0F];
+    _stringBuffer[4] = hexDigitsLower[((x >> 8) & 0xFF)  >> 4];
+    _stringBuffer[5] = hexDigitsLower[(x >> 8) & 0x0F];
+    _stringBuffer[6] = hexDigitsLower[(x & 0xFF)  >> 4];
+    _stringBuffer[7] = hexDigitsLower[x & 0x0F];
 
-    _stringBuffer[0] = hexDigitsLower[b[0] >> 4];
-    _stringBuffer[1] = hexDigitsLower[b[0] & 0x0F];
-    _stringBuffer[2] = hexDigitsLower[b[1] >> 4];
-    _stringBuffer[3] = hexDigitsLower[b[1] & 0x0F];
-    _stringBuffer[4] = hexDigitsLower[b[2] >> 4];
-    _stringBuffer[5] = hexDigitsLower[b[2] & 0x0F];
-    _stringBuffer[6] = hexDigitsLower[b[3] >> 4];
-    _stringBuffer[7] = hexDigitsLower[b[3] & 0x0F];
+    _stringBuffer[9] = hexDigitsLower[((y >> 24) & 0xFF) >> 4];
+    _stringBuffer[10] = hexDigitsLower[(y >> 24) & 0x0F];
+    _stringBuffer[11] = hexDigitsLower[((y >> 16) & 0xFF) >> 4];
+    _stringBuffer[12] = hexDigitsLower[(y >> 16) & 0x0F];
+    
+    _stringBuffer[14] = hexDigitsLower[((y >> 8) & 0xFF)  >> 4];
+    _stringBuffer[15] = hexDigitsLower[(y >> 8) & 0x0F];
+    _stringBuffer[16] = hexDigitsLower[(y & 0xFF)  >> 4];
+    _stringBuffer[17] = hexDigitsLower[y & 0x0F];    
+    
+    _stringBuffer[19] = hexDigitsLower[((z >> 24) & 0xFF) >> 4];
+    _stringBuffer[20] = hexDigitsLower[(z >> 24) & 0x0F];
+    _stringBuffer[21] = hexDigitsLower[((z >> 16) & 0xFF) >> 4];
+    _stringBuffer[22] = hexDigitsLower[(z >> 16) & 0x0F];
 
-    _stringBuffer[9] = hexDigitsLower[b[4] >> 4];
-    _stringBuffer[10] = hexDigitsLower[b[4] & 0x0F];
-    _stringBuffer[11] = hexDigitsLower[b[5] >> 4];
-    _stringBuffer[12] = hexDigitsLower[b[5] & 0x0F];
-
-    _stringBuffer[14] = hexDigitsLower[b[6] >> 4];
-    _stringBuffer[15] = hexDigitsLower[b[6] & 0x0F];
-    _stringBuffer[16] = hexDigitsLower[b[7] >> 4];
-    _stringBuffer[17] = hexDigitsLower[b[7] & 0x0F];
-
-    _stringBuffer[19] = hexDigitsLower[b[8] >> 4];
-    _stringBuffer[20] = hexDigitsLower[b[8] & 0x0F];
-    _stringBuffer[21] = hexDigitsLower[b[9] >> 4];
-    _stringBuffer[22] = hexDigitsLower[b[9] & 0x0F];
-
-    _stringBuffer[24] = hexDigitsLower[b[10] >> 4];
-    _stringBuffer[25] = hexDigitsLower[b[10] & 0x0F];
-    _stringBuffer[26] = hexDigitsLower[b[11] >> 4];
-    _stringBuffer[27] = hexDigitsLower[b[11] & 0x0F];
-    _stringBuffer[28] = hexDigitsLower[b[12] >> 4];
-    _stringBuffer[29] = hexDigitsLower[b[12] & 0x0F];
-    _stringBuffer[30] = hexDigitsLower[b[13] >> 4];
-    _stringBuffer[31] = hexDigitsLower[b[13] & 0x0F];
-    _stringBuffer[32] = hexDigitsLower[b[14] >> 4];
-    _stringBuffer[33] = hexDigitsLower[b[14] & 0x0F];
-    _stringBuffer[34] = hexDigitsLower[b[15] >> 4];
-    _stringBuffer[35] = hexDigitsLower[b[15] & 0x0F];
+    _stringBuffer[24] = hexDigitsLower[((z >> 8) & 0xFF)  >> 4];
+    _stringBuffer[25] = hexDigitsLower[(z >> 8) & 0x0F];
+    _stringBuffer[26] = hexDigitsLower[(z & 0xFF)  >> 4];
+    _stringBuffer[27] = hexDigitsLower[z & 0x0F];
+    _stringBuffer[28] = hexDigitsLower[((w >> 24) & 0xFF) >> 4];
+    _stringBuffer[29] = hexDigitsLower[(w >> 24) & 0x0F];
+    _stringBuffer[30] = hexDigitsLower[((w >> 16) & 0xFF) >> 4];
+    _stringBuffer[31] = hexDigitsLower[(w >> 16) & 0x0F];
+    _stringBuffer[32] = hexDigitsLower[((w >> 8) & 0xFF)  >> 4];
+    _stringBuffer[33] = hexDigitsLower[(w >> 8) & 0x0F];
+    _stringBuffer[34] = hexDigitsLower[(w & 0xFF)  >> 4];
+    _stringBuffer[35] = hexDigitsLower[w & 0x0F];
 
     return new String.fromCharCodes(_stringBuffer);
   }
