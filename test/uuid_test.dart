@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 import 'package:uuid_type/uuid_type.dart';
 
 const zeroList = const <int>[
-  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, //
   0x00, 0x00,
   0x00, 0x00,
   0x00, 0x00,
@@ -12,7 +12,7 @@ const zeroList = const <int>[
 ];
 
 const fullList = const <int>[
-  0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, //
   0xFF, 0xFF,
   0xFF, 0xFF,
   0xFF, 0xFF,
@@ -22,28 +22,28 @@ const fullList = const <int>[
 const uuidBytes = const <String, List<int>>{
   "nil": zeroList,
   "ns-dns": const [
-    0x6B, 0xA7, 0xB8, 0x10,
+    0x6B, 0xA7, 0xB8, 0x10, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
   "ns-url": const [
-    0x6B, 0xA7, 0xB8, 0x11,
+    0x6B, 0xA7, 0xB8, 0x11, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
   "ns-oid": const [
-    0x6B, 0xA7, 0xB8, 0x12,
+    0x6B, 0xA7, 0xB8, 0x12, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
   "ns-x500": const [
-    0x6B, 0xA7, 0xB8, 0x14,
+    0x6B, 0xA7, 0xB8, 0x14, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
@@ -82,7 +82,7 @@ const invalidStrings = const <String>[
   '6ba7b811-9dad-11d1-80b4-00c04fd430',
   // too long
   '6ba7b811-9dad-11d1-80b4-00c04fd430000',
-  // extra markup
+  // extra dashes
   '6ba7b811-9dad-11d1-80b4-00c0-4fd43000',
   // invalid URN
   'urn uuid 6ba7b811-9dad-11d1-80b4-00c04fd430c8',
@@ -154,26 +154,9 @@ void main() {
 
       test('Byte array with slice length <> 16 throws', () {
         expect(() => new Uuid.fromBytes(new Uint8List(0)), throwsArgumentError);
-        expect(() => new Uuid.fromBytes(new Uint8List(17), 2), throwsArgumentError);
+        expect(() => new Uuid.fromBytes(new Uint8List(17), 2),
+            throwsArgumentError);
       });
-
-
-
-      /*
-      test('Invalid version for RFC variant throws', () {
-        var bytes = l2b(fullList);
-        // set RFC variant
-        bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
-        // set version 0 (< 1)
-        bytes[6] = (bytes[6] & 0x0f) | 0x00;
-        expect(() => new Uuid.fromBytes(bytes), throwsUnsupportedError);
-
-        // set version 6 (> 5)
-        bytes[6] = (bytes[6] & 0x0f) | 0x60;
-        expect(() => new Uuid.fromBytes(bytes), throwsUnsupportedError);
-      });
-      */
     });
 
     group('Parsing', () {
@@ -187,7 +170,6 @@ void main() {
 
       test('Invalid string throws FormatException', () {
         invalidStrings.forEach((String source) {
-          //print('  source = $source');
           expect(() => Uuid.parse(source), throwsFormatException);
         });
       });
@@ -245,7 +227,7 @@ void main() {
         var dns = new Uuid.fromBytes(l2b(uuidBytes['ns-dns']));
         // todo(): better test case here
         var u = new Uuid.fromBytes(new Uint8List.fromList(<int>[
-          0x7d, 0x44, 0x48, 0x40,
+          0x7d, 0x44, 0x48, 0x40, //
           0x9d, 0xc0,
           0x11, 0xd1,
           0xb2, 0x45,

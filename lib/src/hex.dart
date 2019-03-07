@@ -11,3 +11,11 @@ const List<int> hexBytes = const <int>[
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
 ];
+
+int charToNibble(int char) {
+  char -= 0x30;
+  if (!(char >= 0 && char < hexBytes.length)) return -1;
+  int nibble = hexBytes[char];
+  if (char != 0 && nibble == 0) return -1;
+  return nibble;
+}

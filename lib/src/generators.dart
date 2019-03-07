@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2019, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 library uuid_type.generators;
@@ -12,8 +12,11 @@ import 'uuid.dart';
 final Uint8List _byteBuffer = new Uint8List(16);
 final Random _rng = new Random.secure();
 
+/// Generator of time-based v1 UUIDs
+///
 ///
 class TimeBasedUuidGenerator {
+  ///
   static const epoch = (2440587 - 2299160) * 86400 * 10000000;
 
   int _ms;
@@ -22,27 +25,28 @@ class TimeBasedUuidGenerator {
   final Uint8List _node;
 
   TimeBasedUuidGenerator([Uint8List nodeId, int clockSequence])
-      : this._ms = 0,
-        this._ns = 0,
-        this._clkSeq = clockSequence ?? _rng.nextInt(1 << 14),
+      : this._clkSeq = clockSequence ?? _rng.nextInt(1 << 14),
         this._node = nodeId ?? _randomNodeBytes();
 
+  // Creates generator with random clock sequence and node
   TimeBasedUuidGenerator.random()
-      : this._ms = 0,
-        this._ns = 0,
-        this._clkSeq = _rng.nextInt(1 << 14),
+      : this._clkSeq = _rng.nextInt(1 << 14),
         this._node = _randomNodeBytes();
 
-
   // TODO:
-  factory TimeBasedUuidGenerator.fromLastUuid(Uuid uuid) {
+  factory TimeBasedUuidGenerator.fromUuidState(Uuid uuid) {
     if (uuid.version != 1) {
-      throw ArgumentError('Invalid version for time-based UUID');
+      throw ArgumentError.value(
+          uuid.version,
+          "uuid.version"
+          "UUID is not time-based v1");
     }
 
-    throw UnimplementedError();
-  }
+    var bytes = uuid.bytes;
 
+    return new TimeBasedUuidGenerator(
+        new Uint8List.fromList(bytes.sublist(10)), bytes[8] << 8 | bytes[9]);
+  }
 
   static Uint8List _randomNodeBytes() {
     var nb = new Uint8List(6);
@@ -84,18 +88,15 @@ class TimeBasedUuidGenerator {
     _byteBuffer[3] = msb;
     _byteBuffer[4] = lsb >> 24;
     _byteBuffer[5] = lsb >> 16;
-    _byteBuffer[6] = lsb >> 8;
+    _byteBuffer[6] = ((lsb >> 8) & 0x0F) | 0x10; // version 1
     _byteBuffer[7] = lsb;
 
-    _byteBuffer[8] = _clkSeq >> 8;
+    _byteBuffer[8] = ((_clkSeq >> 8) & 0x3F) | 0x80; // variant 1
     _byteBuffer[9] = _clkSeq;
 
     for (var i = 10; i < 16; i++) {
-      _byteBuffer[i] = _node[i-10];
+      _byteBuffer[i] = _node[i - 10];
     }
-
-    _byteBuffer[8] = (_byteBuffer[8] & 0x3F) | 0x80; // variant 1
-    _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x10; // version 1
 
     return new Uuid.fromBytes(_byteBuffer);
   }
@@ -104,7 +105,7 @@ class TimeBasedUuidGenerator {
 /// Generator for namespace and name-based UUIDs (v5)
 /// Only SHA1 algo is supported, MD5 is deprecated
 class NameBasedUuidGenerator {
-  /// [Hash] instance, only [hash.sha1] is allowed.
+  /// `Hash` instance, only `hash.sha1` is allowed.
   final Hash hash;
 
   /// UUID namespace
@@ -113,8 +114,6 @@ class NameBasedUuidGenerator {
   NameBasedUuidGenerator(this.namespace) : this.hash = sha1;
 
   /// Generates namespace + name-based v5 UUID
-  /// If [namespace] is not provided will use [defaultNamespace]
-  /// If [defaultNamespace] is not set will throw [StateError]
   Uuid generate(String name) {
     assert(name != null);
 
@@ -143,8 +142,8 @@ class RandomBasedUuidGenerator {
 
   /// Creates instance of generator
   ///
-  /// By default it uses secure random generator provided by [math]
-  /// [math.Random] can be provided as custom RNG
+  /// By default it uses secure random generator provided by `math`
+  /// `math.Random` can be provided as custom RNG
   RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? _rng;
 
   /// Generates random UUID

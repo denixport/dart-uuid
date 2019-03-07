@@ -1,10 +1,9 @@
-// Copyright (c) 2018, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2019, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 library uuid_type;
 
 import 'dart:typed_data';
-
 import 'hex.dart';
 
 /// UUID variant according to RFC4122
@@ -22,7 +21,7 @@ enum Variant {
   future
 }
 
-/// This object represents an UUID, 128 bit Universal Unique IDentifier
+/// This object represents an UUID, 128 bit Universal Unique Identifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
   /// Shared buffer for byte representation for all instances
@@ -59,10 +58,6 @@ abstract class Uuid implements Comparable<Uuid> {
   /// without affecting the [Uuid] instance.
   Uint8List get bytes;
 
-  /// Returns hash code for this UUID
-  ///
-  /// Both [hashCode] and [operator ==] should be overridden to properly
-  /// represent UUID state
   @override
   int get hashCode;
 
@@ -74,9 +69,16 @@ abstract class Uuid implements Comparable<Uuid> {
   /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
   int get version;
 
-  /// Compares this UUID to [Object] assuming it represents another UUID
   @override
   bool operator ==(Object other);
+
+  bool operator >(Uuid other);
+
+  bool operator >=(Uuid other);
+
+  bool operator <(Uuid other);
+
+  bool operator <=(Uuid other);
 
   /// Compares this UUID to another [Uuid]
   ///
@@ -107,8 +109,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Like [parse] except it returns `null` for invalid inputs
   //  instead of throwing.
   static Uuid tryParse(String source) {
-    var e = _parse(source);
-    if (e != null) return null;
+    if (_parse(source) != null) return null;
     return new Uuid.fromBytes(_byteBuffer);
   }
 
@@ -117,66 +118,102 @@ abstract class Uuid implements Comparable<Uuid> {
     const bytePositions = const <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
     ];
+    const dashPositions = const <int>[8, 13, 18, 23];
 
     var chars = source.codeUnits;
-    int a, b;
-    int i = 0;
-    for (int pos in bytePositions) {
-      a = chars[pos] - 0x30;
-      b = chars[pos + 1] - 0x30;
-      if (a >= hexBytes.length || b >= hexBytes.length) {
+
+    int pos;
+
+    // check '-' positions
+    for (pos in dashPositions) {
+      if (chars[pos] != 0x2D) {
         return new FormatException("Invalid UUID string", source, pos);
       }
+    }
 
-      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
-      i++;
+    int n0, n1;
+    for (int i = 0; i < 16; i++) {
+      n0 = charToNibble(chars[bytePositions[i]]);
+      if (n0 == -1) {
+        return new FormatException("Invalid char in UUID string", source, pos);
+      }
+
+      n1 = charToNibble(chars[bytePositions[i] + 1]);
+      if (n1 == -1) {
+        return new FormatException(
+            "Invalid char in UUID string", source, pos + 1);
+      }
+      _byteBuffer[i] = n0 << 4 | n1;
     }
 
     return null;
   }
 
-  ///
+  /// Fills [_byteBuffer] with bytes decoded from hex
   static FormatException _parse(String source) {
-    var s = source.trim();
-    if (s.length == 36) {
+    if (source.length == 36) {
       return _parseCanonical(source);
-    } else if (s.length == 1 + 36 + 1) { // assume GUID
-      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
+    } else if (source.length == 1 + 36 + 1) {
+      // GUID
+      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
         return new FormatException("Invalid GUID string", source);
       }
-      return _parseCanonical(s.substring(1, s.length - 1));
-    } else if (s.length == 9 + 36) { // assume URN
-      if (!s.startsWith('urn:uuid:')) {
+      return _parseCanonical(source.substring(1, source.length - 1));
+    } else if (source.length == 1 + 32 + 1) {
+      // hex GUID
+      if (!(source[0] == '{' && source[source.length - 1] == '}')) {
+        return new FormatException("Invalid GUID string", source);
+      }
+      source = source.substring(1, source.length - 1);
+    } else if (source.length == 9 + 36) {
+      // URN
+      if (!source.startsWith('urn:uuid:')) {
         return new FormatException("Invalid UUID URN string", source);
       }
       return _parseCanonical(source.substring(9));
-    } else if (s.length == 1 + 32 + 1) { // hex GUID
-      if (!(s[0] == '{' && s[s.length - 1] == '}')) {
-        return new FormatException("Invalid GUID string", source);
-      }
-      s = s.substring(1, s.length - 1);
     }
 
-    if (s.length != 32) {
-      return new FormatException("Invalid UUID string", source);
+    if (source.length != 32) {
+      return new FormatException("Invalid UUID hex string", source);
     }
 
-    // parse hex representation
-    var chars = s.codeUnits;
-    int a, b;
+    // parse hex
+    var chars = source.codeUnits;
+    int n0, n1;
     for (int i = 0; i < 16; i++) {
-      a = chars[2 * i] - 0x30;
-      b = chars[2 * i + 1] - 0x30;
-      if (a >= hexBytes.length || b >= hexBytes.length) {
-        return new FormatException("Invalid UUID string", source, i);
+      n0 = charToNibble(chars[2 * i]);
+      if (n0 == -1) {
+        return new FormatException("Invalid char in UUID string", source, i);
       }
 
-      _byteBuffer[i] = hexBytes[a] << 4 | hexBytes[b];
+      n1 = charToNibble(chars[2 * i + 1]);
+      if (n1 == -1) {
+        return new FormatException(
+            "Invalid char in UUID string", source, i + 1);
+      }
+
+      _byteBuffer[i] = n0 << 4 | n1;
+      /*
+      c0 = chars[2 * i] - 0x30;
+      c1 = chars[2 * i + 1] - 0x30;
+
+      if (!(c0 >= 0 && c0 < hexBytes.length) ||
+          (hexBytes[c0] == 0 && c0 != 0)) {
+        return new FormatException("Invalid UUID string c0", source, i);
+      }
+      if (!(c1 >= 0 && c1 < hexBytes.length) ||
+          (hexBytes[c1] == 0 && c1 != 0)) {
+        return new FormatException("Invalid UUID string c1", source, i + 1);
+      }
+
+      _byteBuffer[i] = hexBytes[c0] << 4 | hexBytes[c1];
+      */
     }
+
+    return null;
   }
 }
 
-///
 class _Uuid implements Uuid {
   static const nil = const _Uuid._(0, 0, 0, 0);
 
@@ -227,35 +264,14 @@ class _Uuid implements Uuid {
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
-  Uint8List get bytes {
-    var buffer = new Uint8List(16);
-    buffer[0] = (x >> 24);
-    buffer[1] = (x >> 16);
-    buffer[2] = (x >> 8);
-    buffer[3] = x;
+  Uint8List get bytes => new Uint8List.fromList(<int>[
+        x >> 24, x >> 16, x >> 8, x, //
+        y >> 24, y >> 16, y >> 8, y,
+        z >> 24, z >> 16, z >> 8, z,
+        w >> 24, w >> 16, w >> 8, w,
+      ]);
 
-    buffer[4] = (y >> 24);
-    buffer[5] = (y >> 16);
-    buffer[6] = (y >> 8);
-    buffer[7] = y;
-
-    buffer[8] = (z >> 24);
-    buffer[9] = (z >> 16);
-    buffer[10] = (z >> 8);
-    buffer[11] = z;
-
-    buffer[12] = (w >> 24);
-    buffer[13] = (w >> 16);
-    buffer[14] = (w >> 8);
-    buffer[15] = w;
-
-    return buffer;
-  }
-
-  @override
-  int get hashCode {
-    return (x ^ y) ^ (z ^ w);
-  }
+  int get hashCode => (x ^ y) ^ (z ^ w);
 
   Variant get variant {
     assert((z >> 29) >= 0 && (z >> 29) <= 7);
@@ -276,7 +292,6 @@ class _Uuid implements Uuid {
 
   int get version => (y & 0xF000) >> 12;
 
-  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is _Uuid &&
@@ -291,7 +306,11 @@ class _Uuid implements Uuid {
     return false;
   }
 
-  /// Implements [Comparable.compareTo] for [Uuid]
+  bool operator >(Uuid other) => compareTo(other) > 0;
+  bool operator >=(Uuid other) => compareTo(other) >= 0;
+  bool operator <(Uuid other) => compareTo(other) < 0;
+  bool operator <=(Uuid other) => compareTo(other) <= 0;
+
   int compareTo(Uuid other) {
     // compare version first
     int diff = version - other.version;
@@ -313,46 +332,43 @@ class _Uuid implements Uuid {
     return -1 * other.compareTo(this);
   }
 
-  /// Implements [Uuid.toString]
   String toString() {
-    var b = this.bytes;
+    _stringBuffer[0] = hexDigitsLower[((x >> 24) & 0xFF) >> 4];
+    _stringBuffer[1] = hexDigitsLower[(x >> 24) & 0x0F];
+    _stringBuffer[2] = hexDigitsLower[((x >> 16) & 0xFF) >> 4];
+    _stringBuffer[3] = hexDigitsLower[(x >> 16) & 0x0F];
+    _stringBuffer[4] = hexDigitsLower[((x >> 8) & 0xFF)  >> 4];
+    _stringBuffer[5] = hexDigitsLower[(x >> 8) & 0x0F];
+    _stringBuffer[6] = hexDigitsLower[(x & 0xFF)  >> 4];
+    _stringBuffer[7] = hexDigitsLower[x & 0x0F];
 
-    _stringBuffer[0] = hexDigitsLower[b[0] >> 4];
-    _stringBuffer[1] = hexDigitsLower[b[0] & 0x0F];
-    _stringBuffer[2] = hexDigitsLower[b[1] >> 4];
-    _stringBuffer[3] = hexDigitsLower[b[1] & 0x0F];
-    _stringBuffer[4] = hexDigitsLower[b[2] >> 4];
-    _stringBuffer[5] = hexDigitsLower[b[2] & 0x0F];
-    _stringBuffer[6] = hexDigitsLower[b[3] >> 4];
-    _stringBuffer[7] = hexDigitsLower[b[3] & 0x0F];
+    _stringBuffer[9] = hexDigitsLower[((y >> 24) & 0xFF) >> 4];
+    _stringBuffer[10] = hexDigitsLower[(y >> 24) & 0x0F];
+    _stringBuffer[11] = hexDigitsLower[((y >> 16) & 0xFF) >> 4];
+    _stringBuffer[12] = hexDigitsLower[(y >> 16) & 0x0F];
+    
+    _stringBuffer[14] = hexDigitsLower[((y >> 8) & 0xFF)  >> 4];
+    _stringBuffer[15] = hexDigitsLower[(y >> 8) & 0x0F];
+    _stringBuffer[16] = hexDigitsLower[(y & 0xFF)  >> 4];
+    _stringBuffer[17] = hexDigitsLower[y & 0x0F];    
+    
+    _stringBuffer[19] = hexDigitsLower[((z >> 24) & 0xFF) >> 4];
+    _stringBuffer[20] = hexDigitsLower[(z >> 24) & 0x0F];
+    _stringBuffer[21] = hexDigitsLower[((z >> 16) & 0xFF) >> 4];
+    _stringBuffer[22] = hexDigitsLower[(z >> 16) & 0x0F];
 
-    _stringBuffer[9] = hexDigitsLower[b[4] >> 4];
-    _stringBuffer[10] = hexDigitsLower[b[4] & 0x0F];
-    _stringBuffer[11] = hexDigitsLower[b[5] >> 4];
-    _stringBuffer[12] = hexDigitsLower[b[5] & 0x0F];
-
-    _stringBuffer[14] = hexDigitsLower[b[6] >> 4];
-    _stringBuffer[15] = hexDigitsLower[b[6] & 0x0F];
-    _stringBuffer[16] = hexDigitsLower[b[7] >> 4];
-    _stringBuffer[17] = hexDigitsLower[b[7] & 0x0F];
-
-    _stringBuffer[19] = hexDigitsLower[b[8] >> 4];
-    _stringBuffer[20] = hexDigitsLower[b[8] & 0x0F];
-    _stringBuffer[21] = hexDigitsLower[b[9] >> 4];
-    _stringBuffer[22] = hexDigitsLower[b[9] & 0x0F];
-
-    _stringBuffer[24] = hexDigitsLower[b[10] >> 4];
-    _stringBuffer[25] = hexDigitsLower[b[10] & 0x0F];
-    _stringBuffer[26] = hexDigitsLower[b[11] >> 4];
-    _stringBuffer[27] = hexDigitsLower[b[11] & 0x0F];
-    _stringBuffer[28] = hexDigitsLower[b[12] >> 4];
-    _stringBuffer[29] = hexDigitsLower[b[12] & 0x0F];
-    _stringBuffer[30] = hexDigitsLower[b[13] >> 4];
-    _stringBuffer[31] = hexDigitsLower[b[13] & 0x0F];
-    _stringBuffer[32] = hexDigitsLower[b[14] >> 4];
-    _stringBuffer[33] = hexDigitsLower[b[14] & 0x0F];
-    _stringBuffer[34] = hexDigitsLower[b[15] >> 4];
-    _stringBuffer[35] = hexDigitsLower[b[15] & 0x0F];
+    _stringBuffer[24] = hexDigitsLower[((z >> 8) & 0xFF)  >> 4];
+    _stringBuffer[25] = hexDigitsLower[(z >> 8) & 0x0F];
+    _stringBuffer[26] = hexDigitsLower[(z & 0xFF)  >> 4];
+    _stringBuffer[27] = hexDigitsLower[z & 0x0F];
+    _stringBuffer[28] = hexDigitsLower[((w >> 24) & 0xFF) >> 4];
+    _stringBuffer[29] = hexDigitsLower[(w >> 24) & 0x0F];
+    _stringBuffer[30] = hexDigitsLower[((w >> 16) & 0xFF) >> 4];
+    _stringBuffer[31] = hexDigitsLower[(w >> 16) & 0x0F];
+    _stringBuffer[32] = hexDigitsLower[((w >> 8) & 0xFF)  >> 4];
+    _stringBuffer[33] = hexDigitsLower[(w >> 8) & 0x0F];
+    _stringBuffer[34] = hexDigitsLower[(w & 0xFF)  >> 4];
+    _stringBuffer[35] = hexDigitsLower[w & 0x0F];
 
     return new String.fromCharCodes(_stringBuffer);
   }
