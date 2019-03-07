@@ -132,18 +132,18 @@ abstract class Uuid implements Comparable<Uuid> {
     }
 
     int n0, n1;
-    for (int i = 0; i < 16; i++) {
-      n0 = charToNibble(chars[bytePositions[i]]);
+    for (pos = 0; pos < 16; pos++) {
+      n0 = charToNibble(chars[bytePositions[pos]]);
       if (n0 == -1) {
         return new FormatException("Invalid char in UUID string", source, pos);
       }
 
-      n1 = charToNibble(chars[bytePositions[i] + 1]);
+      n1 = charToNibble(chars[bytePositions[pos] + 1]);
       if (n1 == -1) {
         return new FormatException(
             "Invalid char in UUID string", source, pos + 1);
       }
-      _byteBuffer[i] = n0 << 4 | n1;
+      _byteBuffer[pos] = n0 << 4 | n1;
     }
 
     return null;
@@ -193,21 +193,6 @@ abstract class Uuid implements Comparable<Uuid> {
       }
 
       _byteBuffer[i] = n0 << 4 | n1;
-      /*
-      c0 = chars[2 * i] - 0x30;
-      c1 = chars[2 * i + 1] - 0x30;
-
-      if (!(c0 >= 0 && c0 < hexBytes.length) ||
-          (hexBytes[c0] == 0 && c0 != 0)) {
-        return new FormatException("Invalid UUID string c0", source, i);
-      }
-      if (!(c1 >= 0 && c1 < hexBytes.length) ||
-          (hexBytes[c1] == 0 && c1 != 0)) {
-        return new FormatException("Invalid UUID string c1", source, i + 1);
-      }
-
-      _byteBuffer[i] = hexBytes[c0] << 4 | hexBytes[c1];
-      */
     }
 
     return null;
@@ -257,7 +242,7 @@ class _Uuid implements Uuid {
         (bytes[offset + 14] << 8) |
         bytes[offset + 15];
 
-    if (y == 0 && z == 0 && x == 0 && w == 0) return nil;
+    if ((y | z | x | w) == 0) return nil;
 
     return new _Uuid._(x, y, z, w);
   }
@@ -311,6 +296,7 @@ class _Uuid implements Uuid {
   bool operator <(Uuid other) => compareTo(other) < 0;
   bool operator <=(Uuid other) => compareTo(other) <= 0;
 
+  // TODO: handle time-based UUIDs differently
   int compareTo(Uuid other) {
     // compare version first
     int diff = version - other.version;
