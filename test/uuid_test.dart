@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:test/test.dart';
 import 'package:uuid_type/uuid_type.dart';
 
@@ -125,7 +124,7 @@ Uuid testNil = new Uuid.fromBytes(l2b(zeroList));
 
 void main() {
   group('UUID', () {
-    group('Constructors', () {
+    group('Constructing', () {
       test('Can be created from canonical string', () {
         var u = new Uuid(uuidNsStrings['ns-dns']);
 

@@ -6,9 +6,7 @@ library uuid_type.generators;
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List;
-
 import 'package:crypto/crypto.dart' show Hash, sha1;
-
 import 'uuid.dart';
 
 final Uint8List _byteBuffer = new Uint8List(16);
