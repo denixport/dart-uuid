@@ -6,7 +6,9 @@ library uuid_type.generators;
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List;
+
 import 'package:crypto/crypto.dart' show Hash, sha1;
+
 import 'uuid.dart';
 
 final Uint8List _byteBuffer = new Uint8List(16);
@@ -16,24 +18,50 @@ final Random _rng = new Random.secure();
 ///
 ///
 class TimeBasedUuidGenerator {
-  ///
-  static const epoch = (2440587 - 2299160) * 86400 * 10000000;
+  /// Shared buffer for byte representation for all instances
+  static final _byteBuffer = new Uint8List(16);
 
+  /// Difference in milliseconds between Gregorian and Unix epochs
+  static const epochDiff = (2440587 - 2299160) * 86400 * 10000000;
+
+  // milliseconds since Unix epoch
   int _ms;
+  // additional 100-nanosecond intervals
   int _ns;
+  // clock sequence
   int _clkSeq;
+  // 6 bytes of node ID
   final Uint8List _node;
 
+  static Uint8List _setNodeId(Uint8List nodeId) {
+    assert(nodeId.length == 6);
+
+    if (nodeId == null) {
+      nodeId = new Uint8List(6);
+      int u = _rng.nextInt(0xFFFFFFFF);
+      nodeId[0] = (u >> 24) | 0x01; // | multicast bit
+      nodeId[1] = u >> 16;
+      nodeId[2] = u >> 8;
+      nodeId[3] = u;
+      u = _rng.nextInt(0xFFFF);
+      nodeId[4] = u >> 8;
+      nodeId[5] = u;
+    }
+
+    for (int i = 0; i < 6; i++) {
+      _byteBuffer[i + 10] = nodeId[i];
+    }
+
+    return nodeId;
+  }
+
+  // TODO: validate clock sequence
   TimeBasedUuidGenerator([Uint8List nodeId, int clockSequence])
       : this._clkSeq = clockSequence ?? _rng.nextInt(1 << 14),
-        this._node = nodeId ?? _randomNodeBytes();
+        this._node = _setNodeId(nodeId);
 
-  // Creates generator with random clock sequence and node
-  TimeBasedUuidGenerator.random()
-      : this._clkSeq = _rng.nextInt(1 << 14),
-        this._node = _randomNodeBytes();
-
-  // TODO:
+  /// Creates new generator based on recently created UUID,
+  /// takes clock sequence and node ID from UUID.
   factory TimeBasedUuidGenerator.fromUuidState(Uuid uuid) {
     if (uuid.version != 1) {
       throw ArgumentError.value(
@@ -48,55 +76,44 @@ class TimeBasedUuidGenerator {
         new Uint8List.fromList(bytes.sublist(10)), bytes[8] << 8 | bytes[9]);
   }
 
-  static Uint8List _randomNodeBytes() {
-    var nb = new Uint8List(6);
+  int get clockSequence => _clkSeq;
 
-    int u = _rng.nextInt(0xFFFFFFFF);
-    nb[0] = (u >> 24) | 0x01; // | multicast bit
-    nb[1] = u >> 16;
-    nb[2] = u >> 8;
-    nb[3] = u;
-    u = _rng.nextInt(0xFFFF);
-    nb[4] = u >> 8;
-    nb[5] = u;
-
-    return nb;
-  }
+  Uint8List get nodeId => new Uint8List.fromList(_node);
 
   Uuid generate() {
-    int ms = new DateTime.now().millisecondsSinceEpoch;
-    int ns = 0;
+    DateTime current = new DateTime.now();
+
+    int ms = current.millisecondsSinceEpoch;
+    int ns = current.microsecond * 10;
+
     if (ms == _ms) {
       ns = _ns + 1;
-      // @todo 32bit wrap
     } else if (ms < _ms) {
       _clkSeq++;
-      // @todo 32bit wrap
+      _clkSeq &= 0x3FFF;
+    }
+    if (ns >= 1000) {
+      throw new StateError("Can not create more than 10M UUID/sec");
     }
 
     _ms = ms;
     _ns = ns;
 
-    ms += epoch;
+    ms += epochDiff;
 
-    int msb = (ms ~/ 0x100000000 * 10000) & 0x0FFFFFFF;
-    int lsb = ((ms & 0x0FFFFFFF) * 10000 + ns) % 0x100000000;
+    var timeLow = ((ms & 0x0FFFFFFF) * 10000 + ns) % 0x100000000;
+    var timeMidHi = (ms ~/ 0x100000000 * 10000) & 0x0FFFFFFF;
 
-    _byteBuffer[0] = msb >> 24;
-    _byteBuffer[1] = msb >> 16;
-    _byteBuffer[2] = msb >> 8;
-    _byteBuffer[3] = msb;
-    _byteBuffer[4] = lsb >> 24;
-    _byteBuffer[5] = lsb >> 16;
-    _byteBuffer[6] = ((lsb >> 8) & 0x0F) | 0x10; // version 1
-    _byteBuffer[7] = lsb;
-
+    _byteBuffer[0] = timeLow >> 24;
+    _byteBuffer[1] = timeLow >> 16;
+    _byteBuffer[2] = timeLow >> 8;
+    _byteBuffer[3] = timeLow;
+    _byteBuffer[4] = timeMidHi >> 24;
+    _byteBuffer[5] = timeMidHi >> 16;
+    _byteBuffer[6] = ((timeMidHi >> 8) & 0x0F) | 0x10; // version 1
+    _byteBuffer[7] = timeMidHi;
     _byteBuffer[8] = ((_clkSeq >> 8) & 0x3F) | 0x80; // variant 1
     _byteBuffer[9] = _clkSeq;
-
-    for (var i = 10; i < 16; i++) {
-      _byteBuffer[i] = _node[i - 10];
-    }
 
     return new Uuid.fromBytes(_byteBuffer);
   }
