@@ -105,6 +105,11 @@ class TimeBasedUuidGenerator {
 /// Generator for namespace and name-based UUIDs (v5)
 /// Only SHA1 algo is supported, MD5 is deprecated
 class NameBasedUuidGenerator {
+  static final namespaceDns = Uuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+  static final namespaceUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+  static final namespaceOid = Uuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
+  static final namespaceX500 = Uuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
+
   /// `Hash` instance, only `hash.sha1` is allowed.
   final Hash hash;
 
