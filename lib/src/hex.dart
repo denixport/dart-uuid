@@ -12,7 +12,8 @@ const List<int> hexBytes = const <int>[
   0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
 ];
 
-int charToNibble(int char) {
+// converts hex char into 4-bit value
+int hexToNibble(int char) {
   char -= 0x30;
   if (!(char >= 0 && char < hexBytes.length)) return -1;
   int nibble = hexBytes[char];

@@ -133,12 +133,12 @@ abstract class Uuid implements Comparable<Uuid> {
 
     int n0, n1;
     for (pos = 0; pos < 16; pos++) {
-      n0 = charToNibble(chars[bytePositions[pos]]);
+      n0 = hexToNibble(chars[bytePositions[pos]]);
       if (n0 == -1) {
         return new FormatException("Invalid char in UUID string", source, pos);
       }
 
-      n1 = charToNibble(chars[bytePositions[pos] + 1]);
+      n1 = hexToNibble(chars[bytePositions[pos] + 1]);
       if (n1 == -1) {
         return new FormatException(
             "Invalid char in UUID string", source, pos + 1);
@@ -181,12 +181,12 @@ abstract class Uuid implements Comparable<Uuid> {
     var chars = source.codeUnits;
     int n0, n1;
     for (int i = 0; i < 16; i++) {
-      n0 = charToNibble(chars[2 * i]);
+      n0 = hexToNibble(chars[2 * i]);
       if (n0 == -1) {
         return new FormatException("Invalid char in UUID string", source, i);
       }
 
-      n1 = charToNibble(chars[2 * i + 1]);
+      n1 = hexToNibble(chars[2 * i + 1]);
       if (n1 == -1) {
         return new FormatException(
             "Invalid char in UUID string", source, i + 1);
