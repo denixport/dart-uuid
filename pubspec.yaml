@@ -1,6 +1,6 @@
 name: uuid_type
 description: 'UUID type, parser and generators. Supported RFC versions are: v1, v4, v5'
-version: 0.8.0-beta
+version: 0.9.0-beta
 author: Denis Portnov <denixport@gmail.com>
 uploader: Denis Portnov <denixport@gmail.com>
 homepage: https://github.com/denixport/dart-uuid
