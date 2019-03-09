@@ -131,16 +131,19 @@ class NameBasedUuidGenerator {
   /// `Hash` instance, only `hash.sha1` is allowed.
   final Hash hash;
 
-  /// UUID namespace
-  final Uuid namespace;
+  final Uint8List _nsBytes;
 
-  NameBasedUuidGenerator(this.namespace) : this.hash = sha1;
+  NameBasedUuidGenerator(Uuid namespace)
+      : this._nsBytes = namespace.bytes,
+        this.hash = sha1;
+
+  Uuid get namespace => Uuid.fromBytes(_nsBytes);
 
   /// Generates namespace + name-based v5 UUID
   Uuid generate(String name) {
     assert(name != null);
 
-    var h = hash.convert(namespace.bytes + utf8.encode(name)).bytes;
+    var h = hash.convert(_nsBytes + utf8.encode(name)).bytes;
     assert(h.length >= 16);
     for (int i = 0; i < 16; ++i) {
       _byteBuffer[i] = h[i];
