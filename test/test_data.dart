@@ -119,9 +119,10 @@ const testVariants = const <Variant>[
   Variant.future, // 1 1 1
 ];
 
-var testNamesDns = <String>[
+const testNamesDns = <String>[
   "hello.example.com", "fdda765f-fc57-5604-a269-52a7df8164ec", //
   "www.example.com", "2ed6657d-e927-568b-95e1-2665a8aea6a2",
   "python.org", "886313e1-3b8a-5372-9b90-0c9aee199e5d",
+  "Bücher.example", "3b2e4e71-46e9-5d45-bb2b-0384d899603a",
   "дарт.рф", "ee15950c-7674-5695-a2dc-11d0ed0a7fdd"
 ];

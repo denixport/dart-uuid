@@ -34,12 +34,11 @@ void main() {
     });
 
     test("Uses uint32 values correctly", () {
-      var rnd = new RandomMock(
-          <int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]
-      );
+      var rnd =
+          new RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
 
       var expected = new Uuid.fromBytes(l2b(const <int>[
-        0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, //
         0xFF, 0xFF,
         0x4F, 0xFF,
         0xBF, 0xFF,

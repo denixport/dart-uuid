@@ -31,7 +31,8 @@ class TimeBasedUuidGenerator {
   // 6 bytes of node ID
   final Uint8List _nodeId;
 
-  TimeBasedUuidGenerator._(this._lastMs, this._lastNs, this._clkSeq, this._nodeId);
+  TimeBasedUuidGenerator._(
+      this._lastMs, this._lastNs, this._clkSeq, this._nodeId);
 
   static Uint8List _setNodeId(Uint8List nodeId) {
     assert(nodeId.length == 6);
