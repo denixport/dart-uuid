@@ -22,14 +22,16 @@ class TimeBasedUuidGenerator {
   /// Difference in milliseconds between Gregorian and Unix epochs
   static const epochDiff = (2440587 - 2299160) * 86400 * 10000000;
 
-  // milliseconds since Unix epoch
-  int _ms;
-  // additional 100-nanosecond intervals
-  int _ns;
+  // recent milliseconds since Unix epoch
+  int _lastMs = 0;
+  // recent additional 100-nanosecond intervals
+  int _lastNs = 0;
   // clock sequence
   int _clkSeq;
   // 6 bytes of node ID
-  final Uint8List _node;
+  final Uint8List _nodeId;
+
+  TimeBasedUuidGenerator._(this._lastMs, this._lastNs, this._clkSeq, this._nodeId);
 
   static Uint8List _setNodeId(Uint8List nodeId) {
     assert(nodeId.length == 6);
@@ -56,11 +58,11 @@ class TimeBasedUuidGenerator {
   // TODO: validate clock sequence
   TimeBasedUuidGenerator([Uint8List nodeId, int clockSequence])
       : this._clkSeq = clockSequence ?? _rng.nextInt(1 << 14),
-        this._node = _setNodeId(nodeId);
+        this._nodeId = _setNodeId(nodeId);
 
   /// Creates new generator based on recently created UUID,
   /// takes clock sequence and node ID from UUID.
-  factory TimeBasedUuidGenerator.fromUuidState(Uuid uuid) {
+  factory TimeBasedUuidGenerator.fromStateUuid(Uuid uuid) {
     if (uuid.version != 1) {
       throw ArgumentError.value(
           uuid.version,
@@ -76,7 +78,7 @@ class TimeBasedUuidGenerator {
 
   int get clockSequence => _clkSeq;
 
-  Uint8List get nodeId => new Uint8List.fromList(_node);
+  Uint8List get nodeId => new Uint8List.fromList(_nodeId);
 
   Uuid generate() {
     DateTime current = new DateTime.now();
@@ -84,18 +86,19 @@ class TimeBasedUuidGenerator {
     int ms = current.millisecondsSinceEpoch;
     int ns = current.microsecond * 10;
 
-    if (ms == _ms) {
-      ns = _ns + 1;
-    } else if (ms < _ms) {
+    if (ms == _lastMs && ns == 0) {
+      ns = _lastNs + 1;
+    } else if (ms < _lastMs) {
       _clkSeq++;
       _clkSeq &= 0x3FFF;
     }
-    if (ns >= 1000) {
+
+    if (ns > 9999) {
       throw new StateError("Can not create more than 10M UUID/sec");
     }
 
-    _ms = ms;
-    _ns = ns;
+    _lastMs = ms;
+    _lastNs = ns;
 
     ms += epochDiff;
 
