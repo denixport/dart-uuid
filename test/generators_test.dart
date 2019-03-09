@@ -1,22 +1,11 @@
 import 'dart:math';
-import 'dart:typed_data';
-
 import 'package:test/test.dart';
 import 'package:uuid_type/uuid_type.dart';
 
-// RNG buffer of four 32bit unsigned ints
-const Uint32x4 = const <int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF];
-
-const randSample = const <int>[
-  0xFF, 0xFF, 0xFF, 0xFF,
-  0xFF, 0xFF,
-  0x4F, 0xFF,
-  0xBF, 0xFF,
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-];
+import 'test_data.dart';
 
 class RandomMock implements Random {
-  List<int> buffer = [0, 0, 0, 0];
+  final List<int> buffer;
   int ptr = 0;
 
   RandomMock(this.buffer);
@@ -32,54 +21,53 @@ class RandomMock implements Random {
   bool nextBool() => true;
 }
 
-var namesDns = <String>[
-  "hello.example.com", "fdda765f-fc57-5604-a269-52a7df8164ec", //
-  "www.example.com", "2ed6657d-e927-568b-95e1-2665a8aea6a2",
-  "python.org", "886313e1-3b8a-5372-9b90-0c9aee199e5d",
-  "дарт.рф", "ee15950c-7674-5695-a2dc-11d0ed0a7fdd"
-];
-
 void main() {
-  group('Time-based generator (v1)', () {
+  group("Time-based generator (v1)", () {});
 
-  });
-
-  group('Random-based generator (v4)', () {
-    test('Generates UUID with correct variant and version', () {
+  group("Random-based generator (v4)", () {
+    test("Generates UUID with correct variant and version", () {
       var gen = new RandomBasedUuidGenerator();
       var uuid = gen.generate();
 
-      expect(uuid.variant, equals(Variant.rfc4122));
-      expect(uuid.version, equals(4));
+      expect(uuid.variant, Variant.rfc4122);
+      expect(uuid.version, 4);
     });
 
-    test('Uses uint32 values correctly', () {
-      var expected = new Uuid.fromBytes(new Uint8List.fromList(randSample));
+    test("Uses uint32 values correctly", () {
+      var rnd = new RandomMock(
+          <int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]
+      );
 
-      var rnd = new RandomMock(Uint32x4);
+      var expected = new Uuid.fromBytes(l2b(const <int>[
+        0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF,
+        0x4F, 0xFF,
+        0xBF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      ]));
+
       var uuid = new RandomBasedUuidGenerator(rnd).generate();
 
-      expect(uuid, equals(expected));
+      expect(uuid, expected);
     });
   });
 
-  group('Name-based generator (v5)', () {
-    test('Generates correct UUIDs', () {
+  group("Name-based generator (v5)", () {
+    test("Generates correct UUIDs", () {
       var gen = new NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
-      for (int i = 0; i < namesDns.length; i += 2) {
-        expect(gen.generate(namesDns[i]).toString(), equals(namesDns[i+1]));
+      for (int i = 0; i < testNamesDns.length; i += 2) {
+        expect(gen.generate(testNamesDns[i]).toString(), testNamesDns[i + 1]);
       }
     });
 
-    test('Generates equal UUIDs for equal names', () {
+    test("Generates equal UUIDs for equal names", () {
       var gen = new NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
       var u1 = gen.generate("dart.org");
       var u2 = gen.generate("dart.org");
 
-      expect(u1 == u2, equals(true));
-      expect(u1.bytes, equals(u2.bytes));
-      expect(u1.toString(), equals(u2.toString()));
+      expect(u1 == u2, isTrue);
+      expect(u1.bytes, u2.bytes);
+      expect(u1.toString(), u2.toString());
     });
   });
-
 }
