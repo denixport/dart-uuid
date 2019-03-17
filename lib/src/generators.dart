@@ -5,7 +5,7 @@ library uuid_type.generators;
 
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
-import 'dart:typed_data' show Uint8List, ByteData;
+import 'dart:typed_data' show Uint8List;
 import 'package:crypto/crypto.dart' show Hash, sha1;
 import 'uuid.dart';
 
@@ -60,6 +60,7 @@ class TimeBasedUuidGenerator {
     return nodeId;
   }
 
+  ///
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
       : this._clkSeq = _rng.nextInt(1 << 14),
         this._nodeId = _checkValidNodeId(nodeId);
@@ -150,7 +151,7 @@ class TimeBasedUuidGenerator {
 }
 
 /// Generator for namespace and name-based UUIDs (v5)
-/// Only SHA1 algo is supported, MD5 is deprecated
+/// Only SHA1 is supported, MD5 is deprecated
 class NameBasedUuidGenerator {
   static final namespaceDns = Uuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
   static final namespaceUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");

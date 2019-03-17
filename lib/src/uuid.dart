@@ -3,7 +3,7 @@
 
 library uuid_type;
 
-import 'dart:typed_data';
+import 'dart:typed_data' show Uint8List;
 import 'hex.dart';
 
 /// UUID variant according to RFC4122
@@ -296,19 +296,22 @@ class _Uuid implements Uuid {
   bool operator <(Uuid other) => compareTo(other) < 0;
   bool operator <=(Uuid other) => compareTo(other) <= 0;
 
-  // TODO: handle time-based UUIDs differently?
+  ///
   int compareTo(Uuid other) {
     // compare version first
     int diff = version - other.version;
-    if (diff != 0) diff;
+    if (diff != 0) return diff;
 
     if (other is _Uuid) {
       diff = x - other.x;
       if (diff != 0) return diff;
+
       diff = y - other.y;
       if (diff != 0) return diff;
+
       diff = z - other.z;
       if (diff != 0) return diff;
+
       diff = w - other.w;
       if (diff != 0) return diff;
 
