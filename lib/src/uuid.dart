@@ -33,7 +33,7 @@ abstract class Uuid implements Comparable<Uuid> {
 
   /// Creates a new [Uuid] from canonical string representation
   ///
-  /// If argument is not a valid UUID string [FormatException] is thrown.
+  /// If argument is not a valid UUID string `FormatException` is thrown.
   /// For parsing various UUID formats use [Uuid.parse]
   factory Uuid(String source) {
     if (source.length != 36) {
@@ -50,7 +50,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Creates [Uuid] from byte array
   ///
   /// Optional [offset] is used to read 16 bytes of UUID from larger arrays
-  /// Could return [Uuid.nil] in case of zero byte array
+  /// Would return [Uuid.nil] when zero byte array is provided
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
   /// Returns representation of this [Uuid] as [Uint8List]
@@ -73,17 +73,38 @@ abstract class Uuid implements Comparable<Uuid> {
   bool operator ==(Object other);
 
   bool operator >(Uuid other);
-
   bool operator >=(Uuid other);
-
   bool operator <(Uuid other);
-
   bool operator <=(Uuid other);
 
   /// Compares this UUID to another [Uuid]
   ///
-  /// Comparison is done in lexicographical order
-  int compareTo(Uuid other);
+  /// First, compares by version
+  /// then, if it's time-based UUID, compares timestamps
+  /// then compares all bytes lexically
+  int compareTo(Uuid other) {
+    int ver = version;
+    int diff = ver - other.version;
+    if (diff != 0) return diff;
+
+    var a = bytes;
+    var b = other.bytes;
+
+    if (ver == 1) {
+      for (int pos in const <int>[7, 4, 5, 0, 1, 2, 3]) {
+        diff = a[pos] - b[pos];
+        if (diff != 0) return diff;
+      }
+      return 0;
+    }
+
+    for (int pos = 0; pos < 16; pos++) {
+      diff = a[pos] - b[pos];
+      if (diff != 0) return diff;
+    }
+
+    return 0;
+  }
 
   /// Returns canonical string representation of this [Uuid]
   String toString();
@@ -298,16 +319,32 @@ class _Uuid implements Uuid {
 
   ///
   int compareTo(Uuid other) {
-    // compare version first
-    int diff = version - other.version;
+    int ver = version;
+
+    int diff = ver - other.version;
     if (diff != 0) return diff;
 
     if (other is _Uuid) {
-      diff = x - other.x;
-      if (diff != 0) return diff;
+      // compare timestamps for v1 UUIDs
+      if (ver == 1) {
+        // time hi
+        diff = (y & 0xFFFF) - (other.y & 0xFFFF);
+        if (diff != 0) return diff;
 
-      diff = y - other.y;
-      if (diff != 0) return diff;
+        // time mid
+        diff = (y >> 16) - (other.y >> 16);
+        if (diff != 0) return diff;
+
+        // time lo
+        diff = x - other.x;
+        if (diff != 0) return diff;
+      } else {
+        diff = x - other.x;
+        if (diff != 0) return diff;
+
+        diff = y - other.y;
+        if (diff != 0) return diff;
+      }
 
       diff = z - other.z;
       if (diff != 0) return diff;

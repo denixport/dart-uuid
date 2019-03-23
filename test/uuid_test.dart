@@ -103,8 +103,7 @@ void main() {
         expect(new Uuid.fromBytes(l2b(nsBytes["nil"])) == Uuid.nil, isTrue);
       });
 
-      // todo(): better test case here
-      test("compareTo works", () {
+      test("compareTo is implemented correctly", () {
         var dns = new Uuid.fromBytes(l2b(nsBytes["dns"]));
         var u = new Uuid.fromBytes(new Uint8List.fromList(<int>[
           0x7D, 0x44, 0x48, 0x40, //
@@ -121,6 +120,18 @@ void main() {
         expect(Comparable.compare(u, u) == 0, isTrue);
         expect(Comparable.compare(u, dns) > 0, isTrue);
         expect(Comparable.compare(dns, u) < 0, isTrue);
+      });
+
+      test("Time-based UUIDs are compared by timestamp", () {
+        var newer = new Uuid("00000000-1233-1235-8000-000000000000");
+        var older = new Uuid("00000000-1234-1234-8000-000000000000");
+        expect(Comparable.compare(newer, older) > 0, isTrue);
+
+        // "lexically" order is different
+        var a = new Uuid("00000000-1233-4235-8000-000000000000");
+        var b = new Uuid("00000000-1234-4234-8000-000000000000");
+        expect(Comparable.compare(a, b) > 0, isFalse);
+
       });
 
       test("Node comparison works", () {
