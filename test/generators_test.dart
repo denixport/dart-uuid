@@ -32,8 +32,10 @@ void main() {
       expect(uuid.version, 1);
     });
 
-    test("Generates unique IDs", () {
+    test("Generates unique UUID sequence", () {
       const N = 1000;
+
+      // generate
       var uuids = new List<Uuid>(N);
       var gen = new TimeBasedUuidGenerator();
       for (int i = 0; i < N; i++) {
@@ -47,6 +49,7 @@ void main() {
         prev = uuids[i];
       }
     });
+
   });
 
   group("Random-based generator (v4)", () {
