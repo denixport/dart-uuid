@@ -111,8 +111,9 @@ class TimeBasedUuidGenerator {
     int diff = ((gTimeMidHi & 0xFFFF) - (uTimeMidHi & 0xFFFF)) +
         (gTimeMidHi >> 16) - (uTimeMidHi >> 16) +
         (gTimeLo - uTimeLo);
+
     if (diff >= 0) {
-      // no clock regression , keep original clock sequence
+      // no clock regression, keep original clock sequence
       g._clockSeq = ((b[8] << 8) & 0x3F) | b[9];
     }
 
@@ -153,8 +154,6 @@ class TimeBasedUuidGenerator {
       timeLo = ts & 0xFFFFFFFF;
       timeMidHi = ts >> 32;
     } else {
-      int ms = (ticks ~/ _ticksPerMs);
-      int ns = ticks - ms * _ticksPerMs + _extraTicks;
       ms += _zeroMs;
       timeLo = ((ms & 0xFFFFFFF) * 10000 + ns) % 0x100000000;
       timeMidHi = (ms ~/ 0x100000000 * 10000) & 0xFFFFFFF;

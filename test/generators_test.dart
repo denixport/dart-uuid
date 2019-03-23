@@ -33,13 +33,18 @@ void main() {
     });
 
     test("Generates unique UUID sequence", () {
-      const N = 1000;
+      const N = 10000;
+      var uuids = new List<Uuid>(N);
 
       // generate
-      var uuids = new List<Uuid>(N);
       var gen = new TimeBasedUuidGenerator();
       for (int i = 0; i < N; i++) {
         uuids[i] = gen.generate();
+      }
+
+      // dump
+      for (int i = 0; i < N; i++) {
+        print("${i.toString().padLeft(4, '0')}: ${uuids[i]}");
       }
 
       // check
