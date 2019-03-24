@@ -52,9 +52,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Would return [Uuid.nil] when zero byte array is provided
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
-  /// Returns representation of this [Uuid] as [Uint8List]
-  /// The returned list is a copy, making it possible to change the list
-  /// without affecting the [Uuid] instance.
+  /// Returns representation of this [Uuid] as byte array ([Uint8List])
   Uint8List get bytes;
 
   @override
@@ -66,6 +64,11 @@ abstract class Uuid implements Comparable<Uuid> {
 
   /// Returns UUID version defined in
   /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
+  /// 1 - Time-based
+  /// 2 - DCE Security
+  /// 3 - Name-based, using MD5 hashing
+  /// 4 - Random-based
+  /// 5 - Name-based, using SHA1 hashing
   int get version;
 
   @override
@@ -79,7 +82,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Compares this UUID to another [Uuid]
   ///
   /// First, compares by version
-  /// then, if it's time-based UUID, compares timestamps
+  /// then, if it's time-based v1 UUID, compares timestamps,
   /// then compares all bytes lexically
   int compareTo(Uuid other) {
     int ver = version;
@@ -242,7 +245,7 @@ class _Uuid implements Uuid {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   ]); // time_low
 
-  // UUID is stored as 4 x 32bit values
+  // UUID is stored as 4 x 32bit unsigned integers
   final int x; // time_low
   final int y; // time_mid | time_hi_and_version
   final int z; // clk_seq_hi_res | clk_seq_low | node (0-1)
@@ -287,8 +290,6 @@ class _Uuid implements Uuid {
         w >> 24, w >> 16, w >> 8, w,
       ]);
 
-  int get hashCode => (x ^ y) ^ (z ^ w);
-
   Variant get variant {
     assert((z >> 29) >= 0 && (z >> 29) <= 7);
 
@@ -308,6 +309,8 @@ class _Uuid implements Uuid {
 
   int get version => (y & 0xF000) >> 12;
 
+  int get hashCode => (x ^ y) ^ (z ^ w);
+
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is _Uuid &&
@@ -323,11 +326,14 @@ class _Uuid implements Uuid {
   }
 
   bool operator >(Uuid other) => compareTo(other) > 0;
+
   bool operator >=(Uuid other) => compareTo(other) >= 0;
+
   bool operator <(Uuid other) => compareTo(other) < 0;
+
   bool operator <=(Uuid other) => compareTo(other) <= 0;
 
-  ///
+  @override
   int compareTo(Uuid other) {
     int ver = version;
 

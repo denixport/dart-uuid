@@ -38,6 +38,7 @@ linter:
     - prefer_collection_literals
     - prefer_final_fields
     - prefer_is_not_empty
+    - public_member_api_docscd
     - slash_for_doc_comments
     - test_types_in_equals
     - throw_in_finally

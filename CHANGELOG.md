@@ -1,11 +1,11 @@
 ## 0.9.0-beta
-- time-based generator is refactored to use `Stopwatch` instead of `DateTime` calls.
+- Time-based generator is refactored to use `Stopwatch` instead of `DateTime` calls.
   Parameter `clockSequence` is now deprecated in `TimeBasedUuidGenerator` constructor
 - Comparison is refactored to treat v1 UUIDs differently
-- Base `Uuid` class now has `compareTo` method implemented  
+- Abstract `Uuid` class now has `compareTo` method implemented  
 
 ## 0.8.0-beta
-- Refactored string parsing (API is not affected)
+- Refactored string parsing (does not affect API)
 - Added comparison operators `>` `>=` `<` `<=` 
 
 ## 0.7.0-dev

@@ -1,5 +1,5 @@
 name: uuid_type
-description: 'UUID type, parser and generators. Supported RFC versions are: v1, v4, v5'
+description: 'UUID type, parser and generators. Can generate v1, v4, and v5 UUIDs'
 version: 0.9.0-beta
 author: Denis Portnov <denixport@gmail.com>
 uploader: Denis Portnov <denixport@gmail.com>

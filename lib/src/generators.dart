@@ -19,30 +19,35 @@ class TimeBasedUuidGenerator {
 
   static final Stopwatch _sw = new Stopwatch()..start();
 
-  /// Frequency of the clock used by this generator
+  /// Frequency of the system's clock used by this generator
   static final int clockFrequency = _sw.frequency;
+
   // how many ticks system's clock can generate per millisecond
-  // TODO: notes on firefox and safari
+  // TODO: notes on firefox (and safari?) weird behaviour
   static final int _ticksPerMs = _sw.frequency ~/ 1000;
-  // same but per 100ns interval
+
+  // same but per 100ns interval, round up to 1 for low-res system clock
   static final int _ticksPer100Ns =
       _sw.frequency ~/ 10000000 == 0 ? 1 : _sw.frequency ~/ 10000000;
-  //
+
+  // "zero" point in time from which all timestamps are calculated
   static final int _zeroMs =
       new DateTime.now().millisecondsSinceEpoch + epochOffset;
 
-  // clock sequence initialized with random value
+  // clock sequence, initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
 
+  // ticks used for last generated UUID
   int _lastTicks = 0;
+  // extra ticks counter for low-res clocks
   int _extraTicks = 0;
 
   // 6 bytes of node ID
   final Uint8List _nodeId;
 
-  //
   final Uint8List _byteBuffer = new Uint8List(16);
 
+  // validate or get new random node ID
   static Uint8List _getValidNodeId(Uint8List nodeId) {
     if (nodeId != null) {
       if (nodeId.length != 6) {
@@ -63,7 +68,10 @@ class TimeBasedUuidGenerator {
     return nodeId;
   }
 
+  /// Creates new time-based generator
   ///
+  /// Clock sequence is initialized with random 14 bit value. If no [nodeId]
+  /// is provided, it generates random 6 byte node ID
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
       : this._nodeId = _getValidNodeId(nodeId) {
     // init buffer with node ID bytes
@@ -72,8 +80,12 @@ class TimeBasedUuidGenerator {
     }
   }
 
-  /// Creates new generator based on recently created UUID,
-  /// takes timestamp, clock sequence and node ID.
+  /// Creates new generator from previously generated [state] UUID.
+  ///
+  /// It takes clock sequence and node ID from provided [state].
+  /// If timestamp of [state] is ahead of current time, clock sequence is
+  /// increased see (
+  /// RFC 4122 4.2.1)[https://tools.ietf.org/html/rfc4122#section-4.2.1]
   factory TimeBasedUuidGenerator.fromLastUuid(Uuid state) {
     if (state.version != 1) {
       throw ArgumentError.value(
@@ -99,7 +111,7 @@ class TimeBasedUuidGenerator {
     int gtl = (gb[0] << 24) | (gb[1] << 16) | (gb[2] << 8) | gb[3];
     int gtmh = (gb[4] << 8) | gb[5] | ((gb[6] << 24) & 0x0F) | (gb[7] << 16);
 
-    // if state is ahead, bump clock sequence
+    // if state is ahead of this generator, bump up clock sequence
     if ((gtmh & 0xFFFF) - (utmh & 0xFFFF) < 0 ||
         (gtmh >> 16) - (utmh >> 16) < 0 ||
         (gtl - utl) < 0) {
@@ -112,13 +124,13 @@ class TimeBasedUuidGenerator {
     return g;
   }
 
-  /// Current clock sequence
+  /// Returns current clock sequence for this generator
   int get clockSequence => _clockSeq;
 
-  /// Node ID for this generator
+  /// Returns Node ID for this generator
   Uint8List get nodeId => new Uint8List.fromList(_nodeId);
 
-  ///
+  /// Generates UUID for current time
   Uuid generate() {
     int ticks = _sw.elapsedTicks;
     int dt = ticks - _lastTicks;
@@ -176,20 +188,20 @@ class NameBasedUuidGenerator {
   static final namespaceOid = Uuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
   static final namespaceX500 = Uuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
 
-  /// `Hash` instance, only `hash.sha1` is allowed.
+  /// `Hash` instance, only `hash.sha1` is supported.
   static final Hash hash = sha1;
   //
   static final Uint8List _byteBuffer = new Uint8List(16);
-  //
+  // namespace bytes
   final Uint8List _nsBytes;
 
-  ///
+  /// Creates generator for [namespace]
   NameBasedUuidGenerator(Uuid namespace) : this._nsBytes = namespace.bytes;
 
-  ///
+  /// Returns namespace [Uuid] for this generator
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
 
-  /// Generates namespace + name-based v5 UUID
+  /// Generates name-based v5 UUID for [name]
   Uuid generate(String name) {
     assert(name != null);
 
@@ -206,26 +218,27 @@ class NameBasedUuidGenerator {
     return new Uuid.fromBytes(_byteBuffer);
   }
 
-  /// Returns new [NameBasedUuidGenerator] for provided [namespace]
+  /// Returns new [NameBasedUuidGenerator] for [namespace]
   NameBasedUuidGenerator withNamespace(Uuid namespace) =>
       new NameBasedUuidGenerator(namespace);
 }
 
 /// Generator for random-based UUIDs (v4)
 class RandomBasedUuidGenerator {
-  //
+  // shared byte buffer for UUIDs created by this generator
   static final Uint8List _byteBuffer = new Uint8List(16);
 
-  /// Random number generator
+  /// Random number generator. By default it uses secure RNG returned
+  /// by [Random.secure]
   final Random rng;
 
   /// Creates instance of generator
   ///
-  /// By default it uses secure random generator provided by `math`
-  /// `math.Random` can be provided as custom RNG
+  /// If no [rng] provided, it uses secure random generator returned by `math`
+  /// [Random.secure]
   RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? Random.secure();
 
-  /// Generates random UUID
+  /// Generates random-based v4 UUID
   Uuid generate() {
     int u32;
     for (int i = 0; i < 4; i++) {
