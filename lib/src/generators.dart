@@ -25,6 +25,7 @@ class TimeBasedUuidGenerator {
   // how many ticks system's clock can generate per millisecond
   // TODO: notes on firefox and safari
   static final int _ticksPerMs = _sw.frequency ~/ 1000;
+  static final int _ticksPer100Ns = _sw.frequency ~/ 10000000 == 0 ? 1: _sw.frequency ~/ 10000000;
 
   final int _zeroMs = new DateTime.now().millisecondsSinceEpoch + epochOffset;
 
@@ -132,6 +133,7 @@ class TimeBasedUuidGenerator {
     int dt = ticks - _lastTicks;
 
     if (dt == 0) {
+      // account for low res clocks
       // same tick, bump extra ticks counter
       ++_extraTicks;
     } else {
@@ -145,7 +147,7 @@ class TimeBasedUuidGenerator {
     }
 
     int ms = (ticks ~/ _ticksPerMs);
-    int ns = ticks - ms * _ticksPerMs + _extraTicks;
+    int ns = (ticks - ms * _ticksPerMs) ~/ _ticksPer100Ns + _extraTicks;
 
     int timeLo, timeMidHi;
     // compiler trick for faster math in Dart vs JS

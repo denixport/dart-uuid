@@ -22,8 +22,7 @@ class RandomMock implements Random {
 }
 
 void main() {
-
-  group("Time-based generator (v1)", (){
+  group("Time-based generator (v1)", () {
     test("Generates UUID with correct variant and version", () {
       var gen = new TimeBasedUuidGenerator();
       var uuid = gen.generate();
@@ -42,11 +41,6 @@ void main() {
         uuids[i] = gen.generate();
       }
 
-      // dump
-      for (int i = 0; i < N; i++) {
-        print("${i.toString().padLeft(4, '0')}: ${uuids[i]}");
-      }
-
       // check
       var prev = uuids[0];
       for (int i = 1; i < N; i++) {
@@ -54,7 +48,6 @@ void main() {
         prev = uuids[i];
       }
     });
-
   });
 
   group("Random-based generator (v4)", () {
@@ -67,9 +60,8 @@ void main() {
     });
 
     test("Uses uint32 values correctly", () {
-      var rnd = new RandomMock(
-          <int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]
-      );
+      var rnd =
+          new RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
 
       var expected = new Uuid.fromBytes(l2b(const <int>[
         0xFF, 0xFF, 0xFF, 0xFF, //
