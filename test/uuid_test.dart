@@ -41,10 +41,8 @@ void main() {
 
     group("Parsing", () {
       test("Can be parsed from various formats", () {
-        var std = validStrings[0];
-
         validStrings.forEach((String source) {
-          expect((Uuid.parse(source)).toString(), std);
+          expect((Uuid.parse(source)).toString(), validStrings[0]);
         });
       });
 

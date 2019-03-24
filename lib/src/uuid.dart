@@ -4,7 +4,6 @@
 library uuid_type;
 
 import 'dart:typed_data' show Uint8List;
-import 'hex.dart';
 
 /// UUID variant according to RFC4122
 enum Variant {
@@ -109,7 +108,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Returns canonical string representation of this [Uuid]
   String toString();
 
-  /// Parses [source] as [Uuid]
+  /// Parses [source] string as [Uuid]. Parsing is case insensitive.
   ///
   /// Throws [FormatException] in case of invalid UUID representation
   ///
@@ -134,6 +133,32 @@ abstract class Uuid implements Comparable<Uuid> {
     return new Uuid.fromBytes(_byteBuffer);
   }
 
+  static int _parseHexByte(int c1, int c2) {
+    const List<int> hexBytes = const <int>[
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, //
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    ];
+
+    c1 -= 0x30;
+    if (c1 < 0 || c1 >= hexBytes.length) return -2;
+
+    c2 -= 0x30;
+    if (c2 < 0 || c2 >= hexBytes.length) return -1;
+
+    int b1 = hexBytes[c1];
+    if (b1 == 0xFF) return -2;
+
+    int b2 = hexBytes[c2];
+    if (b2 == 0xFF) return -1;
+
+    return (b1 << 4) | b2;
+  }
+
   ///
   static FormatException _parseCanonical(String source) {
     const bytePositions = const <int>[
@@ -143,28 +168,20 @@ abstract class Uuid implements Comparable<Uuid> {
 
     var chars = source.codeUnits;
 
-    int pos;
-
     // check '-' positions
-    for (pos in dashPositions) {
+    for (int pos in dashPositions) {
       if (chars[pos] != 0x2D) {
-        return new FormatException("Invalid UUID string", source, pos);
+        return new FormatException("No dash separator", source, pos);
       }
     }
 
-    int n0, n1;
-    for (pos = 0; pos < 16; pos++) {
-      n0 = hexToNibble(chars[bytePositions[pos]]);
-      if (n0 == -1) {
-        return new FormatException("Invalid char in UUID string", source, pos);
+    int i = 0;
+    for (int pos in bytePositions) {
+      int b = _parseHexByte(chars[pos], chars[pos + 1]);
+      if (b < 0) {
+        return new FormatException("Invalid hex char", source, pos + b + 2);
       }
-
-      n1 = hexToNibble(chars[bytePositions[pos] + 1]);
-      if (n1 == -1) {
-        return new FormatException(
-            "Invalid char in UUID string", source, pos + 1);
-      }
-      _byteBuffer[pos] = n0 << 4 | n1;
+      _byteBuffer[i++] = b;
     }
 
     return null;
@@ -195,25 +212,18 @@ abstract class Uuid implements Comparable<Uuid> {
     }
 
     if (source.length != 32) {
-      return new FormatException("Invalid UUID hex string", source);
+      return new FormatException("Invalid UUID hex string length", source);
     }
 
-    // parse hex
+    // parse 32-char hex
     var chars = source.codeUnits;
-    int n0, n1;
+
     for (int i = 0; i < 16; i++) {
-      n0 = hexToNibble(chars[2 * i]);
-      if (n0 == -1) {
-        return new FormatException("Invalid char in UUID string", source, i);
+      int b = _parseHexByte(chars[2*i], chars[2*i + 1]);
+      if (b < 0) {
+        return new FormatException("Invalid hex char", source, 2*i + b + 2);
       }
-
-      n1 = hexToNibble(chars[2 * i + 1]);
-      if (n1 == -1) {
-        return new FormatException(
-            "Invalid char in UUID string", source, i + 1);
-      }
-
-      _byteBuffer[i] = n0 << 4 | n1;
+      _byteBuffer[i] = b;
     }
 
     return null;
@@ -359,42 +369,47 @@ class _Uuid implements Uuid {
   }
 
   String toString() {
-    _stringBuffer[0] = hexCodeUnits[((x >> 24) & 0xFF) >> 4];
-    _stringBuffer[1] = hexCodeUnits[(x >> 24) & 0x0F];
-    _stringBuffer[2] = hexCodeUnits[((x >> 16) & 0xFF) >> 4];
-    _stringBuffer[3] = hexCodeUnits[(x >> 16) & 0x0F];
-    _stringBuffer[4] = hexCodeUnits[((x >> 8) & 0xFF) >> 4];
-    _stringBuffer[5] = hexCodeUnits[(x >> 8) & 0x0F];
-    _stringBuffer[6] = hexCodeUnits[(x & 0xFF) >> 4];
-    _stringBuffer[7] = hexCodeUnits[x & 0x0F];
+    const List<int> hexcu = const <int>[
+      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, //
+      0x61, 0x62, 0x63, 0x64, 0x65, 0x66
+    ];
 
-    _stringBuffer[9] = hexCodeUnits[((y >> 24) & 0xFF) >> 4];
-    _stringBuffer[10] = hexCodeUnits[(y >> 24) & 0x0F];
-    _stringBuffer[11] = hexCodeUnits[((y >> 16) & 0xFF) >> 4];
-    _stringBuffer[12] = hexCodeUnits[(y >> 16) & 0x0F];
+    _stringBuffer[0] = hexcu[((x >> 24) & 0xFF) >> 4];
+    _stringBuffer[1] = hexcu[(x >> 24) & 0x0F];
+    _stringBuffer[2] = hexcu[((x >> 16) & 0xFF) >> 4];
+    _stringBuffer[3] = hexcu[(x >> 16) & 0x0F];
+    _stringBuffer[4] = hexcu[((x >> 8) & 0xFF) >> 4];
+    _stringBuffer[5] = hexcu[(x >> 8) & 0x0F];
+    _stringBuffer[6] = hexcu[(x & 0xFF) >> 4];
+    _stringBuffer[7] = hexcu[x & 0x0F];
 
-    _stringBuffer[14] = hexCodeUnits[((y >> 8) & 0xFF) >> 4];
-    _stringBuffer[15] = hexCodeUnits[(y >> 8) & 0x0F];
-    _stringBuffer[16] = hexCodeUnits[(y & 0xFF) >> 4];
-    _stringBuffer[17] = hexCodeUnits[y & 0x0F];
+    _stringBuffer[9] = hexcu[((y >> 24) & 0xFF) >> 4];
+    _stringBuffer[10] = hexcu[(y >> 24) & 0x0F];
+    _stringBuffer[11] = hexcu[((y >> 16) & 0xFF) >> 4];
+    _stringBuffer[12] = hexcu[(y >> 16) & 0x0F];
 
-    _stringBuffer[19] = hexCodeUnits[((z >> 24) & 0xFF) >> 4];
-    _stringBuffer[20] = hexCodeUnits[(z >> 24) & 0x0F];
-    _stringBuffer[21] = hexCodeUnits[((z >> 16) & 0xFF) >> 4];
-    _stringBuffer[22] = hexCodeUnits[(z >> 16) & 0x0F];
+    _stringBuffer[14] = hexcu[((y >> 8) & 0xFF) >> 4];
+    _stringBuffer[15] = hexcu[(y >> 8) & 0x0F];
+    _stringBuffer[16] = hexcu[(y & 0xFF) >> 4];
+    _stringBuffer[17] = hexcu[y & 0x0F];
 
-    _stringBuffer[24] = hexCodeUnits[((z >> 8) & 0xFF) >> 4];
-    _stringBuffer[25] = hexCodeUnits[(z >> 8) & 0x0F];
-    _stringBuffer[26] = hexCodeUnits[(z & 0xFF) >> 4];
-    _stringBuffer[27] = hexCodeUnits[z & 0x0F];
-    _stringBuffer[28] = hexCodeUnits[((w >> 24) & 0xFF) >> 4];
-    _stringBuffer[29] = hexCodeUnits[(w >> 24) & 0x0F];
-    _stringBuffer[30] = hexCodeUnits[((w >> 16) & 0xFF) >> 4];
-    _stringBuffer[31] = hexCodeUnits[(w >> 16) & 0x0F];
-    _stringBuffer[32] = hexCodeUnits[((w >> 8) & 0xFF) >> 4];
-    _stringBuffer[33] = hexCodeUnits[(w >> 8) & 0x0F];
-    _stringBuffer[34] = hexCodeUnits[(w & 0xFF) >> 4];
-    _stringBuffer[35] = hexCodeUnits[w & 0x0F];
+    _stringBuffer[19] = hexcu[((z >> 24) & 0xFF) >> 4];
+    _stringBuffer[20] = hexcu[(z >> 24) & 0x0F];
+    _stringBuffer[21] = hexcu[((z >> 16) & 0xFF) >> 4];
+    _stringBuffer[22] = hexcu[(z >> 16) & 0x0F];
+
+    _stringBuffer[24] = hexcu[((z >> 8) & 0xFF) >> 4];
+    _stringBuffer[25] = hexcu[(z >> 8) & 0x0F];
+    _stringBuffer[26] = hexcu[(z & 0xFF) >> 4];
+    _stringBuffer[27] = hexcu[z & 0x0F];
+    _stringBuffer[28] = hexcu[((w >> 24) & 0xFF) >> 4];
+    _stringBuffer[29] = hexcu[(w >> 24) & 0x0F];
+    _stringBuffer[30] = hexcu[((w >> 16) & 0xFF) >> 4];
+    _stringBuffer[31] = hexcu[(w >> 16) & 0x0F];
+    _stringBuffer[32] = hexcu[((w >> 8) & 0xFF) >> 4];
+    _stringBuffer[33] = hexcu[(w >> 8) & 0x0F];
+    _stringBuffer[34] = hexcu[(w & 0xFF) >> 4];
+    _stringBuffer[35] = hexcu[w & 0x0F];
 
     return new String.fromCharCodes(_stringBuffer);
   }
