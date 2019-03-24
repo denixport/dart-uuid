@@ -48,6 +48,19 @@ void main() {
         prev = uuids[i];
       }
     });
+
+    test("Can be created from state", () {
+      var g1 = new TimeBasedUuidGenerator();
+      var state = g1.generate();
+
+      var g2 = new TimeBasedUuidGenerator.fromLastUuid(state);
+      var uuid = g2.generate();
+
+      expect(uuid, greaterThan(state));
+
+      expect(g2.clockSequence, equals(g1.clockSequence));
+      expect(g2.nodeId, equals(g1.nodeId));
+    });
   });
 
   group("Random-based generator (v4)", () {

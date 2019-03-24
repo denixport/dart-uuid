@@ -14,17 +14,22 @@ import 'uuid.dart';
 ///
 class TimeBasedUuidGenerator {
   // offset between Gregorian and Unix epochs, in milliseconds
-  static const epochOffset = (2440587 - 2299160) * 86400;
-
+  static const epochOffset = (2440587 - 2299160) * 86400 * 1000;
   static final _rng = new Random();
-  static final Stopwatch _sw = new Stopwatch();
+
+  static final Stopwatch _sw = new Stopwatch()..start();
+
+  /// Frequency of the clock used by this generator
   static final int clockFrequency = _sw.frequency;
   // how many ticks system's clock can generate per millisecond
   // TODO: notes on firefox and safari
   static final int _ticksPerMs = _sw.frequency ~/ 1000;
-  static final int _ticksPer100Ns = _sw.frequency ~/ 10000000 == 0 ? 1: _sw.frequency ~/ 10000000;
-
-  final int _zeroMs = new DateTime.now().millisecondsSinceEpoch + epochOffset;
+  // same but per 100ns interval
+  static final int _ticksPer100Ns =
+      _sw.frequency ~/ 10000000 == 0 ? 1 : _sw.frequency ~/ 10000000;
+  //
+  static final int _zeroMs =
+      new DateTime.now().millisecondsSinceEpoch + epochOffset;
 
   // clock sequence initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
@@ -37,8 +42,6 @@ class TimeBasedUuidGenerator {
 
   //
   final Uint8List _byteBuffer = new Uint8List(16);
-
-  TimeBasedUuidGenerator._(this._lastTicks, this._clockSeq, this._nodeId);
 
   static Uint8List _getValidNodeId(Uint8List nodeId) {
     if (nodeId != null) {
@@ -63,8 +66,6 @@ class TimeBasedUuidGenerator {
   ///
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
       : this._nodeId = _getValidNodeId(nodeId) {
-    // start stopwatch
-    _sw.start();
     // init buffer with node ID bytes
     for (int i = 0; i < 6; i++) {
       _byteBuffer[10 + i] = _nodeId[i];
@@ -73,47 +74,40 @@ class TimeBasedUuidGenerator {
 
   /// Creates new generator based on recently created UUID,
   /// takes timestamp, clock sequence and node ID.
-  factory TimeBasedUuidGenerator.fromLastUuid(Uuid uuid) {
-    if (uuid.version != 1) {
+  factory TimeBasedUuidGenerator.fromLastUuid(Uuid state) {
+    if (state.version != 1) {
       throw ArgumentError.value(
-          uuid.version,
-          "uuid.version"
-          "UUID is not time-based v1");
+          state.version, "version", "UUID is not time-based");
     }
 
-    var b = uuid.bytes;
+    var sb = state.bytes;
 
+    var clockSeq = ((sb[8] << 8) | sb[9]) & 0x3FFF;
     var nodeId = new Uint8List(6);
     for (int i = 0; i < 6; i++) {
-      nodeId[i] = b[10 + i];
+      nodeId[i] = sb[10 + i];
     }
 
-    // get timestamp from generator
+    // timestamp of the state UUID
+    int utl = (sb[0] << 24) | (sb[1] << 16) | (sb[2] << 8) | sb[3];
+    int utmh = (sb[4] << 8) | sb[5] | ((sb[6] << 24) & 0x0F) | (sb[7] << 16);
+
+    // create generator and get timestamp from it
     var g = TimeBasedUuidGenerator(nodeId);
+    var gb = g.generate().bytes;
 
-    int gTimeLo, gTimeMidHi;
-    // compiler trick for faster math in Dart vs JS
-    if ((1 << 32) != 0) {
-      int ts = g._zeroMs * 10000;
-      gTimeLo = ts & 0xFFFFFFFF;
-      gTimeMidHi = ts >> 32;
-    } else {
-      gTimeLo = ((g._zeroMs & 0xFFFFFFF) * 10000) % 0x100000000;
-      gTimeMidHi = (g._zeroMs ~/ 0x100000000 * 10000) & 0xFFFFFFF;
+    int gtl = (gb[0] << 24) | (gb[1] << 16) | (gb[2] << 8) | gb[3];
+    int gtmh = (gb[4] << 8) | gb[5] | ((gb[6] << 24) & 0x0F) | (gb[7] << 16);
+
+    // if state is ahead, bump clock sequence
+    if ((gtmh & 0xFFFF) - (utmh & 0xFFFF) < 0 ||
+        (gtmh >> 16) - (utmh >> 16) < 0 ||
+        (gtl - utl) < 0) {
+      clockSeq++;
+      clockSeq &= 0x3FFF;
     }
 
-    int uTimeLo = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
-    int uTimeMidHi = (b[4] << 8) | b[5] | ((b[6] << 24) & 0x0F) | (b[7] << 16);
-
-    // check if state time is beyond generator's time
-    int diff = ((gTimeMidHi & 0xFFFF) - (uTimeMidHi & 0xFFFF)) +
-        (gTimeMidHi >> 16) - (uTimeMidHi >> 16) +
-        (gTimeLo - uTimeLo);
-
-    if (diff >= 0) {
-      // no clock regression, keep original clock sequence
-      g._clockSeq = ((b[8] << 8) & 0x3F) | b[9];
-    }
+    g._clockSeq = clockSeq;
 
     return g;
   }
@@ -190,8 +184,7 @@ class NameBasedUuidGenerator {
   final Uint8List _nsBytes;
 
   ///
-  NameBasedUuidGenerator(Uuid namespace)
-      : this._nsBytes = namespace.bytes;
+  NameBasedUuidGenerator(Uuid namespace) : this._nsBytes = namespace.bytes;
 
   ///
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
@@ -230,8 +223,7 @@ class RandomBasedUuidGenerator {
   ///
   /// By default it uses secure random generator provided by `math`
   /// `math.Random` can be provided as custom RNG
-  RandomBasedUuidGenerator([Random rng])
-      : this.rng = rng ?? Random.secure();
+  RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? Random.secure();
 
   /// Generates random UUID
   Uuid generate() {
