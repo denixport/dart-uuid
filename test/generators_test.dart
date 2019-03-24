@@ -61,6 +61,13 @@ void main() {
       expect(g2.clockSequence, equals(g1.clockSequence));
       expect(g2.nodeId, equals(g1.nodeId));
     });
+
+    test("Updates clock sequence on clock regression", () {
+      var state = Uuid("fffffff0-ffff-1fff-8000-000000000000");
+
+      var g = new TimeBasedUuidGenerator.fromLastUuid(state);
+      expect(g.clockSequence, 1);
+    });
   });
 
   group("Random-based generator (v4)", () {
