@@ -1,3 +1,6 @@
+## 1.0.0-beta
+- More tests and documentation
+
 ## 0.9.0-beta
 - Time-based generator is refactored to use `Stopwatch` instead of `DateTime` calls.
   Parameter `clockSequence` is now deprecated in `TimeBasedUuidGenerator` constructor

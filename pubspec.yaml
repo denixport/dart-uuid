@@ -1,6 +1,6 @@
 name: uuid_type
 description: 'UUID type, parser and generators. Can generate v1, v4, and v5 UUIDs'
-version: 0.9.0-beta
+version: 1.0.0-beta
 author: Denis Portnov <denixport@gmail.com>
 uploader: Denis Portnov <denixport@gmail.com>
 homepage: https://github.com/denixport/dart-uuid
@@ -10,4 +10,3 @@ dependencies:
   crypto: '>=2.0.0 <3.0.0'
 dev_dependencies:
   test: '^1.3.0'
-  benchmark_harness: '^1.0.0'
