@@ -52,23 +52,18 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Would return [Uuid.nil] when zero byte array is provided
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
-  /// Returns representation of this [Uuid] as byte array ([Uint8List])
+  /// Byte array representing this UUID
   Uint8List get bytes;
 
   @override
   int get hashCode;
 
-  /// Returns [Variant] defined in
+  /// Variant defined in
   /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.1)
   Variant get variant;
 
-  /// Returns UUID version defined in
+  /// Version defined in
   /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
-  /// 1 - Time-based
-  /// 2 - DCE Security
-  /// 3 - Name-based, using MD5 hashing
-  /// 4 - Random-based
-  /// 5 - Name-based, using SHA1 hashing
   int get version;
 
   @override
@@ -108,34 +103,11 @@ abstract class Uuid implements Comparable<Uuid> {
     return 0;
   }
 
-  /// Returns canonical string representation of this [Uuid]
+  /// Returns canonical string representation
   String toString();
 
-  /// Parses [source] string as [Uuid]. Parsing is case insensitive.
-  ///
-  /// Throws [FormatException] in case of invalid UUID representation
-  ///
-  /// The [source] must be in one of the following UUID formats
-  /// - Canonical string: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
-  /// - Hex string (36 chars): xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  /// - URN: urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
-  /// - Canonical GUID: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx}
-  /// - Hex GUID: {xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
-  static Uuid parse(String source) {
-    var e = _parse(source);
-    if (e != null) throw e;
-    return new Uuid.fromBytes(_byteBuffer);
-  }
-
-  /// Parses [source] as [Uuid]
-  ///
-  /// Like [parse] except it returns `null` for invalid inputs
-  //  instead of throwing.
-  static Uuid tryParse(String source) {
-    if (_parse(source) != null) return null;
-    return new Uuid.fromBytes(_byteBuffer);
-  }
-
+  // parses 2 hex chars into one byte
+  // returns value < 0 if parsing fails
   static int _parseHexByte(int c1, int c2) {
     const List<int> hexBytes = const <int>[
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, //
@@ -162,7 +134,7 @@ abstract class Uuid implements Comparable<Uuid> {
     return (b1 << 4) | b2;
   }
 
-  ///
+  // parses canonical UUID string
   static FormatException _parseCanonical(String source) {
     const bytePositions = const <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
@@ -190,7 +162,8 @@ abstract class Uuid implements Comparable<Uuid> {
     return null;
   }
 
-  /// Fills [_byteBuffer] with bytes decoded from hex
+  // Fills _byteBuffer with bytes decoded from hex
+  // returns FormatException if parsing fails
   static FormatException _parse(String source) {
     if (source.length == 36) {
       return _parseCanonical(source);
@@ -219,6 +192,7 @@ abstract class Uuid implements Comparable<Uuid> {
     }
 
     // parse 32-char hex
+
     var chars = source.codeUnits;
 
     for (int i = 0; i < 16; i++) {
@@ -230,6 +204,31 @@ abstract class Uuid implements Comparable<Uuid> {
     }
 
     return null;
+  }
+
+  /// Parses [source] string as [Uuid]. Parsing is case insensitive.
+  ///
+  /// Throws [FormatException] in case of invalid UUID representation
+  ///
+  /// The [source] must be in one of the following UUID formats
+  /// - Canonical string: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
+  /// - Hex string (36 chars): xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  /// - URN: urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx
+  /// - Canonical GUID: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx}
+  /// - Hex GUID: {xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
+  static Uuid parse(String source) {
+    var e = _parse(source);
+    if (e != null) throw e;
+    return new Uuid.fromBytes(_byteBuffer);
+  }
+
+  /// Parses [source] as [Uuid]. Parsing is case insensitive.
+  ///
+  /// Like [parse] except it returns `null` for invalid inputs
+  //  instead of throwing.
+  static Uuid tryParse(String source) {
+    if (_parse(source) != null) return null;
+    return new Uuid.fromBytes(_byteBuffer);
   }
 }
 
