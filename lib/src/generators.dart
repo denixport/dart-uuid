@@ -9,9 +9,6 @@ import 'dart:typed_data' show Uint8List;
 import 'package:crypto/crypto.dart' show Hash, sha1;
 import 'uuid.dart';
 
-final Uint8List _sharedByteBuffer = new Uint8List(16);
-final Random _rng = new Random.secure();
-
 /// Generator of time-based v1 UUIDs
 ///
 ///
@@ -186,14 +183,15 @@ class NameBasedUuidGenerator {
   static final namespaceX500 = Uuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
 
   /// `Hash` instance, only `hash.sha1` is allowed.
-  final Hash hash;
-
+  static final Hash hash = sha1;
+  //
+  static final Uint8List _byteBuffer = new Uint8List(16);
+  //
   final Uint8List _nsBytes;
 
   ///
   NameBasedUuidGenerator(Uuid namespace)
-      : this._nsBytes = namespace.bytes,
-        this.hash = sha1;
+      : this._nsBytes = namespace.bytes;
 
   ///
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
@@ -206,13 +204,13 @@ class NameBasedUuidGenerator {
     assert(digest.length >= 16);
 
     for (int i = 0; i < 16; ++i) {
-      _sharedByteBuffer[i] = digest[i];
+      _byteBuffer[i] = digest[i];
     }
 
-    _sharedByteBuffer[8] = (_sharedByteBuffer[8] & 0xBF) | 0x80; // variant 1
-    _sharedByteBuffer[6] = (_sharedByteBuffer[6] & 0x0F) | 0x50; // version 5
+    _byteBuffer[8] = (_byteBuffer[8] & 0xBF) | 0x80; // variant 1
+    _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x50; // version 5
 
-    return new Uuid.fromBytes(_sharedByteBuffer);
+    return new Uuid.fromBytes(_byteBuffer);
   }
 
   /// Returns new [NameBasedUuidGenerator] for provided [namespace]
@@ -222,14 +220,18 @@ class NameBasedUuidGenerator {
 
 /// Generator for random-based UUIDs (v4)
 class RandomBasedUuidGenerator {
-  // Random number generator
+  //
+  static final Uint8List _byteBuffer = new Uint8List(16);
+
+  /// Random number generator
   final Random rng;
 
   /// Creates instance of generator
   ///
   /// By default it uses secure random generator provided by `math`
   /// `math.Random` can be provided as custom RNG
-  RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? _rng;
+  RandomBasedUuidGenerator([Random rng])
+      : this.rng = rng ?? Random.secure();
 
   /// Generates random UUID
   Uuid generate() {
@@ -237,15 +239,15 @@ class RandomBasedUuidGenerator {
     for (int i = 0; i < 4; i++) {
       u32 = rng.nextInt(0xFFFFFFFF);
 
-      _sharedByteBuffer[i * 4] = (u32 >> 24);
-      _sharedByteBuffer[i * 4 + 1] = (u32 >> 16);
-      _sharedByteBuffer[i * 4 + 2] = (u32 >> 8);
-      _sharedByteBuffer[i * 4 + 3] = u32;
+      _byteBuffer[i * 4] = (u32 >> 24);
+      _byteBuffer[i * 4 + 1] = (u32 >> 16);
+      _byteBuffer[i * 4 + 2] = (u32 >> 8);
+      _byteBuffer[i * 4 + 3] = u32;
     }
 
-    _sharedByteBuffer[8] = (_sharedByteBuffer[8] & 0x3F) | 0x80; // variant 1
-    _sharedByteBuffer[6] = (_sharedByteBuffer[6] & 0x0F) | 0x40; // version 4
+    _byteBuffer[8] = (_byteBuffer[8] & 0x3F) | 0x80; // variant 1
+    _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x40; // version 4
 
-    return new Uuid.fromBytes(_sharedByteBuffer);
+    return new Uuid.fromBytes(_byteBuffer);
   }
 }
