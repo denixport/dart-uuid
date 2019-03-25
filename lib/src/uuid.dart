@@ -69,9 +69,16 @@ abstract class Uuid implements Comparable<Uuid> {
   @override
   bool operator ==(Object other);
 
+  /// Greater than operator,  see [compareTo] for rules
   bool operator >(Uuid other);
+
+  /// Greater than or equal operator, see [compareTo] for rules
   bool operator >=(Uuid other);
+
+  /// Less than operator, see [compareTo] for rules
   bool operator <(Uuid other);
+
+  /// Less than or equal operator, see [compareTo] for rules
   bool operator <=(Uuid other);
 
   /// Compares this UUID to another [Uuid]

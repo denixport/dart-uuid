@@ -1,21 +1,20 @@
+include: package:pedantic/analysis_options.yaml
+
 analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
-
-errors:
-  dead_code: error
-  override_on_non_overriding_method: error
-  unused_element: error
-  unused_import: error
-  unused_local_variable: error
+  errors:
+    dead_code: error
+    override_on_non_overriding_method: warning
+    todo: info
+    unused_element: error
+    unused_import: warning
+    unused_local_variable: error
 
 linter:
   rules:
-    - avoid_empty_else
-    - avoid_init_to_null
     - avoid_null_checks_in_equality_operators
-    - avoid_return_types_on_setters
     - await_only_futures
     - camel_case_types
     - cancel_subscriptions
@@ -23,7 +22,6 @@ linter:
     - control_flow_in_finally
     - directives_ordering
     - empty_catches
-    - empty_constructor_bodies
     - empty_statements
     - hash_and_equals
     - implementation_imports
@@ -32,16 +30,12 @@ linter:
     - library_prefixes
     - list_remove_unrelated_type
     - non_constant_identifier_names
-    - only_throw_errors
     - overridden_fields
     - package_api_docs
     - prefer_collection_literals
     - prefer_final_fields
-    - prefer_is_not_empty
-    - public_member_api_docscd
-    - slash_for_doc_comments
+    - public_member_api_docs
     - test_types_in_equals
     - throw_in_finally
     - type_init_formals
     - unrelated_type_equality_checks
-    - valid_regexps
