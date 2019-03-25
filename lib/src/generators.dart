@@ -14,9 +14,12 @@ import 'uuid.dart';
 ///
 class TimeBasedUuidGenerator {
   // offset between Gregorian and Unix epochs, in milliseconds
-  static const epochOffset = (2440587 - 2299160) * 86400 * 1000;
+  static const _epochOffset = (2440587 - 2299160) * 86400 * 1000;
+
+  //
   static final _rng = new Random();
 
+  //
   static final Stopwatch _sw = new Stopwatch()..start();
 
   /// Frequency of the system's clock used by this generator
@@ -32,7 +35,7 @@ class TimeBasedUuidGenerator {
 
   // "zero" point in time from which all timestamps are calculated
   static final int _zeroMs =
-      new DateTime.now().millisecondsSinceEpoch + epochOffset;
+      new DateTime.now().millisecondsSinceEpoch + _epochOffset;
 
   // clock sequence, initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
@@ -183,9 +186,16 @@ class TimeBasedUuidGenerator {
 /// Generator for namespace and name-based UUIDs (v5)
 /// Only SHA1 is supported, MD5 is deprecated
 class NameBasedUuidGenerator {
+  /// Name space IDs for some potentially interesting name spaces see
+  /// [RFC 4122 Appendix C](https://tools.ietf.org/html/rfc4122#appendix-C)
+
+  /// Name space for DNS
   static final namespaceDns = Uuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+  /// Name space for URL
   static final namespaceUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+  /// Name space for ISO OID
   static final namespaceOid = Uuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
+  /// Name space for X.500 DN
   static final namespaceX500 = Uuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
 
   /// `Hash` instance, only `hash.sha1` is supported.
