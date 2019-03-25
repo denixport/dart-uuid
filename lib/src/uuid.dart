@@ -196,9 +196,9 @@ abstract class Uuid implements Comparable<Uuid> {
     var chars = source.codeUnits;
 
     for (int i = 0; i < 16; i++) {
-      int b = _parseHexByte(chars[2*i], chars[2*i + 1]);
+      int b = _parseHexByte(chars[2 * i], chars[2 * i + 1]);
       if (b < 0) {
-        return new FormatException("Invalid hex char", source, 2*i + b + 2);
+        return new FormatException("Invalid hex char", source, 2 * i + b + 2);
       }
       _byteBuffer[i] = b;
     }
