@@ -23,9 +23,6 @@ enum Variant {
 /// This object represents an UUID, 128 bit Universal Unique Identifier
 /// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
 abstract class Uuid implements Comparable<Uuid> {
-  /// Shared buffer for byte representation for all instances
-  static final _byteBuffer = new Uint8List(16);
-
   /// Nil UUID
   /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
   static Uuid get nil => new Uuid.fromBytes(new Uint8List(16));
@@ -35,11 +32,6 @@ abstract class Uuid implements Comparable<Uuid> {
   /// If argument is not a valid UUID string `FormatException` is thrown.
   /// For parsing various UUID formats use [Uuid.parse]
   factory Uuid(String source) {
-    if (source.length != 36) {
-      throw new FormatException(
-          "UUID string has invalid length (${source.length})", source);
-    }
-
     var e = _parseCanonical(source);
     if (e != null) throw e;
 
@@ -141,6 +133,9 @@ abstract class Uuid implements Comparable<Uuid> {
     return (b1 << 4) | b2;
   }
 
+  /// Shared buffer for byte representation for all instances
+  static final _byteBuffer = new Uint8List(16);
+
   // parses canonical UUID string
   static FormatException _parseCanonical(String source) {
     const bytePositions = const <int>[
@@ -148,12 +143,17 @@ abstract class Uuid implements Comparable<Uuid> {
     ];
     const dashPositions = const <int>[8, 13, 18, 23];
 
+    if (source.length != 36) {
+      return new FormatException(
+          "UUID string has invalid length (${source.length})", source);
+    }
+
     var chars = source.codeUnits;
 
     // check '-' positions
     for (int pos in dashPositions) {
       if (chars[pos] != 0x2D) {
-        return new FormatException("No dash separator", source, pos);
+        return new FormatException("Separator char expected", source, pos);
       }
     }
 

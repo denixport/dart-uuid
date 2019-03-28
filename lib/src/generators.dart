@@ -42,12 +42,14 @@ class TimeBasedUuidGenerator {
 
   // ticks used for last generated UUID
   int _lastTicks = 0;
+
   // extra ticks counter for low-res clocks
   int _extraTicks = 0;
 
   // 6 bytes of node ID
   final Uint8List _nodeId;
 
+  //
   final Uint8List _byteBuffer = new Uint8List(16);
 
   // validate or get new random node ID
@@ -203,8 +205,7 @@ class NameBasedUuidGenerator {
 
   /// `Hash` instance, only `hash.sha1` is supported.
   static final Hash hash = sha1;
-  //
-  static final Uint8List _byteBuffer = new Uint8List(16);
+
   // namespace bytes
   final Uint8List _nsBytes;
 
@@ -213,6 +214,9 @@ class NameBasedUuidGenerator {
 
   /// Returns namespace [Uuid] for this generator
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
+
+  //
+  static final Uint8List _byteBuffer = new Uint8List(16);
 
   /// Generates name-based v5 UUID for [name]
   Uuid generate(String name) {
@@ -238,9 +242,6 @@ class NameBasedUuidGenerator {
 
 /// Generator for random-based UUIDs (v4)
 class RandomBasedUuidGenerator {
-  // shared byte buffer for UUIDs created by this generator
-  static final Uint8List _byteBuffer = new Uint8List(16);
-
   /// Random number generator. By default it uses secure RNG returned
   /// by [Random.secure]
   final Random rng;
@@ -250,6 +251,9 @@ class RandomBasedUuidGenerator {
   /// If no [rng] provided, it uses secure random generator returned by `math`
   /// [Random.secure]
   RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? Random.secure();
+
+  // shared byte buffer for UUIDs created by this generator
+  static final Uint8List _byteBuffer = new Uint8List(16);
 
   /// Generates random-based v4 UUID
   Uuid generate() {
