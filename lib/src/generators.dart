@@ -191,10 +191,13 @@ class NameBasedUuidGenerator {
 
   /// Name space for DNS
   static final namespaceDns = Uuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+
   /// Name space for URL
   static final namespaceUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+
   /// Name space for ISO OID
   static final namespaceOid = Uuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8");
+
   /// Name space for X.500 DN
   static final namespaceX500 = Uuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8");
 
