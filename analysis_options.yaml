@@ -6,6 +6,8 @@ analyzer:
     implicit-dynamic: false
   errors:
     dead_code: error
+    missing_required_param: warning
+    missing_return: warning
     override_on_non_overriding_method: warning
     todo: info
     unused_element: error
@@ -14,6 +16,7 @@ analyzer:
 
 linter:
   rules:
+    - always_declare_return_types
     - avoid_null_checks_in_equality_operators
     - await_only_futures
     - camel_case_types
