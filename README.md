@@ -10,7 +10,7 @@ and supports generation, parsing and formatting of UUIDs.
 Features:
 * [x] Creates UUID from string and byte-array, as well as GUID and URN strings
 * [x] Provides access to variant, version and byte data of UUID
-* [x] Generates RFC4122 time-based v1, random-based v4, and name & namespace based v5 UUIDs
+* [x] Generates RFC4122 time-based v1, random-based v4, and namespace & name-based v5 UUIDs
 * [x] Implements `Comparable` for UUID comparison and lexicographical sorting
 * [x] Runs on Dart VM and in browser
 
@@ -38,3 +38,15 @@ dependencies:
 ```dart
 import 'package:uuid_type/uuid_type.dart';
 ```
+
+### Usage
+[API](https://pub.dartlang.org/documentation/uuid_type/latest/)
+
+## Release notes
+See [CHANGELOG](CHANGELOG.md)
+
+## Features and Bugs
+Please file bugs and feature requests at the [issue tracker][tracker].
+
+
+[tracker]: https://github.com/denixport/dart-uuid/issues
