@@ -20,7 +20,7 @@ class TimeBasedUuidGenerator {
   static final _rng = new Random();
 
   //
-  static final Stopwatch _sw = new Stopwatch()..start();
+  static final Stopwatch _sw = new Stopwatch();
 
   /// Frequency of the system's clock used by this generator
   static final int clockFrequency = _sw.frequency;
@@ -79,6 +79,8 @@ class TimeBasedUuidGenerator {
   /// is provided, it generates random 6 byte node ID
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
       : this._nodeId = _getValidNodeId(nodeId) {
+    // make sure stopwatch is started
+    _sw.start();
     // init buffer with node ID bytes
     for (int i = 0; i < 6; i++) {
       _byteBuffer[10 + i] = _nodeId[i];
