@@ -24,7 +24,7 @@ class RandomMock implements Random {
 void main() {
   group("Time-based generator (v1)", () {
     test("Generates UUID with correct variant and version", () {
-      var gen = new TimeBasedUuidGenerator();
+      var gen = TimeBasedUuidGenerator();
       var uuid = gen.generate();
 
       expect(uuid.variant, Variant.rfc4122);
@@ -33,7 +33,7 @@ void main() {
 
     test("Generates unique UUID sequence", () {
       const N = 10000;
-      var uuids = new List<Uuid>(N);
+      var uuids = List<Uuid>(N);
 
       // generate
       var gen = new TimeBasedUuidGenerator();
@@ -50,10 +50,10 @@ void main() {
     });
 
     test("Can be created from state", () {
-      var g1 = new TimeBasedUuidGenerator();
+      var g1 = TimeBasedUuidGenerator();
       var state = g1.generate();
 
-      var g2 = new TimeBasedUuidGenerator.fromLastUuid(state);
+      var g2 = TimeBasedUuidGenerator.fromLastUuid(state);
       var uuid = g2.generate();
 
       expect(uuid, greaterThan(state));
@@ -65,14 +65,14 @@ void main() {
     test("Updates clock sequence on clock regression", () {
       var state = Uuid("fffffff0-ffff-1fff-8000-000000000000");
 
-      var g = new TimeBasedUuidGenerator.fromLastUuid(state);
+      var g = TimeBasedUuidGenerator.fromLastUuid(state);
       expect(g.clockSequence, 1);
     });
   });
 
   group("Random-based generator (v4)", () {
     test("Generates UUID with correct variant and version", () {
-      var gen = new RandomBasedUuidGenerator();
+      var gen = RandomBasedUuidGenerator();
       var uuid = gen.generate();
 
       expect(uuid.variant, Variant.rfc4122);
@@ -81,9 +81,9 @@ void main() {
 
     test("Uses uint32 values correctly", () {
       var rnd =
-          new RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
+       RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
 
-      var expected = new Uuid.fromBytes(l2b(const <int>[
+      var expected = Uuid.fromBytes(l2b(const <int>[
         0xFF, 0xFF, 0xFF, 0xFF, //
         0xFF, 0xFF,
         0x4F, 0xFF,
@@ -91,7 +91,7 @@ void main() {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
       ]));
 
-      var uuid = new RandomBasedUuidGenerator(rnd).generate();
+      var uuid = RandomBasedUuidGenerator(rnd).generate();
 
       expect(uuid, expected);
     });
@@ -99,7 +99,7 @@ void main() {
 
   group("Name-based generator (v5)", () {
     test("Generates UUID with correct variant and version", () {
-      var gen = new NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
+      var gen = NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
       var uuid = gen.generate("");
 
       expect(uuid.variant, Variant.rfc4122);
@@ -107,14 +107,14 @@ void main() {
     });
 
     test("Generates correct UUIDs", () {
-      var gen = new NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
+      var gen = NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
       for (int i = 0; i < testNamesDns.length; i += 2) {
         expect(gen.generate(testNamesDns[i]).toString(), testNamesDns[i + 1]);
       }
     });
 
     test("Generates equal UUIDs for equal names", () {
-      var gen = new NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
+      var gen = NameBasedUuidGenerator(NameBasedUuidGenerator.namespaceDns);
       var u1 = gen.generate("dart.org");
       var u2 = gen.generate("dart.org");
 

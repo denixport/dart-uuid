@@ -13,36 +13,36 @@ const nsStrings = const <String, String>{
   "x500": "6ba7b814-9dad-11d1-80b4-00c04fd430c8",
 };
 
-const nsBytes = const <String, List<int>>{
-  "nil": const <int>[
+const nsBytes = <String, List<int>>{
+  "nil": <int>[
     0x00, 0x00, 0x00, 0x00, //
     0x00, 0x00,
     0x00, 0x00,
     0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   ],
-  "dns": const [
+  "dns": [
     0x6B, 0xA7, 0xB8, 0x10, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
-  "url": const [
+  "url": [
     0x6B, 0xA7, 0xB8, 0x11, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
-  "oid": const [
+  "oid": [
     0x6B, 0xA7, 0xB8, 0x12, //
     0x9D, 0xAD,
     0x11, 0xD1,
     0x80, 0xB4,
     0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
   ],
-  "x500": const [
+  "x500": [
     0x6B, 0xA7, 0xB8, 0x14, //
     0x9D, 0xAD,
     0x11, 0xD1,
@@ -51,7 +51,7 @@ const nsBytes = const <String, List<int>>{
   ],
 };
 
-const fullList = const <int>[
+const fullList = <int>[
   0xFF, 0xFF, 0xFF, 0xFF, //
   0xFF, 0xFF,
   0xFF, 0xFF,
@@ -59,7 +59,7 @@ const fullList = const <int>[
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 ];
 
-const validStrings = const <String>[
+const validStrings = <String>[
   // canonical, lower case
   '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
   // canonical, upper case
@@ -77,7 +77,7 @@ const validStrings = const <String>[
   'urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8',
 ];
 
-const invalidStrings = const <String>[
+const invalidStrings = <String>[
   // too short
   '6ba7b811-9dad-11d1-80b4-00c04fd430',
   // too long
@@ -100,7 +100,7 @@ const invalidStrings = const <String>[
   'xxxxb8119dad11d180b400c04fd430',
 ];
 
-const nilStrings = const <String>[
+const nilStrings = <String>[
   '00000000-0000-0000-0000-000000000000',
   '00000000000000000000000000000000',
   '{00000000-0000-0000-0000-000000000000}',
@@ -108,7 +108,7 @@ const nilStrings = const <String>[
   'urn:uuid:00000000-0000-0000-0000-000000000000',
 ];
 
-const testVariants = const <Variant>[
+const testVariants = <Variant>[
   Variant.ncs, // 0 0 0
   Variant.ncs, // 0 0 1
   Variant.ncs, // 0 1 0
