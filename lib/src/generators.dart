@@ -17,10 +17,10 @@ class TimeBasedUuidGenerator {
   static const _epochOffset = (2440587 - 2299160) * 86400 * 1000;
 
   //
-  static final _rng = new Random();
+  static final _rng = Random();
 
   //
-  static final Stopwatch _sw = new Stopwatch();
+  static final Stopwatch _sw = Stopwatch();
 
   /// Frequency of the system's clock used by this generator
   static final int clockFrequency = _sw.frequency;
@@ -35,7 +35,7 @@ class TimeBasedUuidGenerator {
 
   // "zero" point in time from which all timestamps are calculated
   static final int _zeroMs =
-      new DateTime.now().millisecondsSinceEpoch + _epochOffset;
+      DateTime.now().millisecondsSinceEpoch + _epochOffset;
 
   // clock sequence, initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
@@ -50,7 +50,7 @@ class TimeBasedUuidGenerator {
   final Uint8List _nodeId;
 
   //
-  final Uint8List _byteBuffer = new Uint8List(16);
+  final Uint8List _byteBuffer = Uint8List(16);
 
   // validate or get new random node ID
   static Uint8List _getValidNodeId(Uint8List nodeId) {
@@ -59,7 +59,7 @@ class TimeBasedUuidGenerator {
         throw ArgumentError("Node Id length should be 6 bytes");
       }
     } else {
-      nodeId = new Uint8List(6);
+      nodeId = Uint8List(6);
       int u = _rng.nextInt(0xFFFFFFFF);
       nodeId[0] = (u >> 24) | 0x01; // | multicast bit
       nodeId[1] = u >> 16;
@@ -102,7 +102,7 @@ class TimeBasedUuidGenerator {
     var sb = state.bytes;
 
     var clockSeq = ((sb[8] << 8) | sb[9]) & 0x3FFF;
-    var nodeId = new Uint8List(6);
+    var nodeId = Uint8List(6);
     for (int i = 0; i < 6; i++) {
       nodeId[i] = sb[10 + i];
     }
@@ -135,7 +135,7 @@ class TimeBasedUuidGenerator {
   int get clockSequence => _clockSeq;
 
   /// Returns Node ID for this generator
-  Uint8List get nodeId => new Uint8List.fromList(_nodeId);
+  Uint8List get nodeId => Uint8List.fromList(_nodeId);
 
   /// Generates UUID for current time
   Uuid generate() {
@@ -183,7 +183,7 @@ class TimeBasedUuidGenerator {
     _byteBuffer[9] = _clockSeq;
     // bytes (10-15) are already set with NodeId bytes
 
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 }
 
@@ -218,7 +218,7 @@ class NameBasedUuidGenerator {
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
 
   //
-  static final Uint8List _byteBuffer = new Uint8List(16);
+  static final Uint8List _byteBuffer = Uint8List(16);
 
   /// Generates name-based v5 UUID for [name]
   Uuid generate(String name) {
@@ -234,12 +234,12 @@ class NameBasedUuidGenerator {
     _byteBuffer[8] = (_byteBuffer[8] & 0xBF) | 0x80; // variant 1
     _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x50; // version 5
 
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 
   /// Returns new [NameBasedUuidGenerator] for [namespace]
   NameBasedUuidGenerator withNamespace(Uuid namespace) =>
-      new NameBasedUuidGenerator(namespace);
+      NameBasedUuidGenerator(namespace);
 }
 
 /// Generator for random-based UUIDs (v4)
@@ -255,7 +255,7 @@ class RandomBasedUuidGenerator {
   RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? Random.secure();
 
   // shared byte buffer for UUIDs created by this generator
-  static final Uint8List _byteBuffer = new Uint8List(16);
+  static final Uint8List _byteBuffer = Uint8List(16);
 
   /// Generates random-based v4 UUID
   Uuid generate() {
@@ -272,6 +272,6 @@ class RandomBasedUuidGenerator {
     _byteBuffer[8] = (_byteBuffer[8] & 0x3F) | 0x80; // variant 1
     _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x40; // version 4
 
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 }

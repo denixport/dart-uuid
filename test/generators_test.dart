@@ -36,7 +36,7 @@ void main() {
       var uuids = List<Uuid>(N);
 
       // generate
-      var gen = new TimeBasedUuidGenerator();
+      var gen = TimeBasedUuidGenerator();
       for (int i = 0; i < N; i++) {
         uuids[i] = gen.generate();
       }

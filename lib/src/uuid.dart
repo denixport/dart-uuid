@@ -25,7 +25,7 @@ enum Variant {
 abstract class Uuid implements Comparable<Uuid> {
   /// Nil UUID
   /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
-  static Uuid get nil => new Uuid.fromBytes(new Uint8List(16));
+  static Uuid get nil => Uuid.fromBytes(Uint8List(16));
 
   /// Creates a new [Uuid] from canonical string representation
   ///
@@ -35,7 +35,7 @@ abstract class Uuid implements Comparable<Uuid> {
     var e = _parseCanonical(source);
     if (e != null) throw e;
 
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 
   /// Creates [Uuid] from byte array
@@ -108,7 +108,7 @@ abstract class Uuid implements Comparable<Uuid> {
   // parses 2 hex chars into one byte
   // returns value < 0 if parsing fails
   static int _parseHexByte(int c1, int c2) {
-    const List<int> hexBytes = const <int>[
+    const List<int> hexBytes = <int>[
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, //
       0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
       0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -134,17 +134,17 @@ abstract class Uuid implements Comparable<Uuid> {
   }
 
   /// Shared buffer for byte representation for all instances
-  static final _byteBuffer = new Uint8List(16);
+  static final _byteBuffer = Uint8List(16);
 
   // parses canonical UUID string
   static FormatException _parseCanonical(String source) {
-    const bytePositions = const <int>[
+    const bytePositions = <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
     ];
-    const dashPositions = const <int>[8, 13, 18, 23];
+    const dashPositions = <int>[8, 13, 18, 23];
 
     if (source.length != 36) {
-      return new FormatException(
+      return FormatException(
           "UUID string has invalid length (${source.length})", source);
     }
 
@@ -153,7 +153,7 @@ abstract class Uuid implements Comparable<Uuid> {
     // check '-' positions
     for (int pos in dashPositions) {
       if (chars[pos] != 0x2D) {
-        return new FormatException("Separator char expected", source, pos);
+        return FormatException("Separator char expected", source, pos);
       }
     }
 
@@ -161,7 +161,7 @@ abstract class Uuid implements Comparable<Uuid> {
     for (int pos in bytePositions) {
       int b = _parseHexByte(chars[pos], chars[pos + 1]);
       if (b < 0) {
-        return new FormatException("Invalid hex char", source, pos + b + 2);
+        return FormatException("Invalid hex char", source, pos + b + 2);
       }
       _byteBuffer[i++] = b;
     }
@@ -177,25 +177,25 @@ abstract class Uuid implements Comparable<Uuid> {
     } else if (source.length == 1 + 36 + 1) {
       // GUID
       if (!(source[0] == '{' && source[source.length - 1] == '}')) {
-        return new FormatException("Invalid GUID string", source);
+        return FormatException("Invalid GUID string", source);
       }
       return _parseCanonical(source.substring(1, source.length - 1));
     } else if (source.length == 1 + 32 + 1) {
       // hex GUID
       if (!(source[0] == '{' && source[source.length - 1] == '}')) {
-        return new FormatException("Invalid GUID string", source);
+        return FormatException("Invalid GUID string", source);
       }
       source = source.substring(1, source.length - 1);
     } else if (source.length == 9 + 36) {
       // URN
       if (!source.startsWith('urn:uuid:')) {
-        return new FormatException("Invalid UUID URN string", source);
+        return FormatException("Invalid UUID URN string", source);
       }
       return _parseCanonical(source.substring(9));
     }
 
     if (source.length != 32) {
-      return new FormatException("Invalid UUID hex string length", source);
+      return FormatException("Invalid UUID hex string length", source);
     }
 
     // parse 32-char hex
@@ -205,7 +205,7 @@ abstract class Uuid implements Comparable<Uuid> {
     for (int i = 0; i < 16; i++) {
       int b = _parseHexByte(chars[2 * i], chars[2 * i + 1]);
       if (b < 0) {
-        return new FormatException("Invalid hex char", source, 2 * i + b + 2);
+        return FormatException("Invalid hex char", source, 2 * i + b + 2);
       }
       _byteBuffer[i] = b;
     }
@@ -226,7 +226,7 @@ abstract class Uuid implements Comparable<Uuid> {
   static Uuid parse(String source) {
     var e = _parse(source);
     if (e != null) throw e;
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 
   /// Parses [source] as [Uuid]. Parsing is case insensitive.
@@ -235,15 +235,15 @@ abstract class Uuid implements Comparable<Uuid> {
   //  instead of throwing.
   static Uuid tryParse(String source) {
     if (_parse(source) != null) return null;
-    return new Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_byteBuffer);
   }
 }
 
 class _Uuid implements Uuid {
-  static const nil = const _Uuid._(0, 0, 0, 0);
+  static const nil = _Uuid._(0, 0, 0, 0);
 
   // Buffer to hold 36 chars of canonical string representation
-  static final Uint8List _stringBuffer = new Uint8List.fromList(const <int>[
+  static final Uint8List _stringBuffer = Uint8List.fromList(const <int>[
     0, 0, 0, 0, 0, 0, 0, 0, 0x2D, //
     0, 0, 0, 0, 0x2D,
     0, 0, 0, 0, 0x2D,
@@ -262,7 +262,7 @@ class _Uuid implements Uuid {
     assert(bytes != null);
 
     if (offset < 0 || (offset + 16 > bytes.length)) {
-      throw new ArgumentError('Invalid offset');
+      throw ArgumentError('Invalid offset');
     }
 
     int x = (bytes[offset] << 24) |
@@ -284,12 +284,12 @@ class _Uuid implements Uuid {
 
     if ((y | z | x | w) == 0) return nil;
 
-    return new _Uuid._(x, y, z, w);
+    return _Uuid._(x, y, z, w);
   }
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
-  Uint8List get bytes => new Uint8List.fromList(<int>[
+  Uint8List get bytes => Uint8List.fromList(<int>[
         x >> 24, x >> 16, x >> 8, x, //
         y >> 24, y >> 16, y >> 8, y,
         z >> 24, z >> 16, z >> 8, z,
@@ -299,7 +299,7 @@ class _Uuid implements Uuid {
   Variant get variant {
     assert((z >> 29) >= 0 && (z >> 29) <= 7);
 
-    const variants = const <Variant>[
+    const variants = <Variant>[
       Variant.ncs, // 0 0 0
       Variant.ncs, // 0 0 1
       Variant.ncs, // 0 1 0
@@ -381,7 +381,7 @@ class _Uuid implements Uuid {
   }
 
   String toString() {
-    const List<int> hexcu = const <int>[
+    const List<int> hexcu = <int>[
       0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, //
       0x61, 0x62, 0x63, 0x64, 0x65, 0x66
     ];
@@ -423,6 +423,6 @@ class _Uuid implements Uuid {
     _stringBuffer[34] = hexcu[(w & 0xFF) >> 4];
     _stringBuffer[35] = hexcu[w & 0x0F];
 
-    return new String.fromCharCodes(_stringBuffer);
+    return String.fromCharCodes(_stringBuffer);
   }
 }

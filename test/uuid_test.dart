@@ -7,7 +7,7 @@ void main() {
   group("UUID", () {
     group("Constructing", () {
       test("Can be created from canonical string", () {
-        var u = new Uuid(nsStrings["dns"]);
+        var u = Uuid(nsStrings["dns"]);
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
@@ -16,16 +16,16 @@ void main() {
 
       test("Invalid string throws", () {
         invalidStrings.forEach((String source) {
-          expect(() => new Uuid(source), throwsFormatException);
+          expect(() => Uuid(source), throwsFormatException);
         });
       });
 
       test("Non-canonical hex string throws", () {
-        expect(() => new Uuid(validStrings[2]), throwsFormatException);
+        expect(() => Uuid(validStrings[2]), throwsFormatException);
       });
 
       test("Can be created from byte array", () {
-        var u = new Uuid.fromBytes(l2b(nsBytes["dns"]));
+        var u = Uuid.fromBytes(l2b(nsBytes["dns"]));
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
@@ -33,8 +33,8 @@ void main() {
       });
 
       test("Byte array with slice length <> 16 throws", () {
-        expect(() => new Uuid.fromBytes(new Uint8List(0)), throwsArgumentError);
-        expect(() => new Uuid.fromBytes(new Uint8List(17), 2),
+        expect(() => Uuid.fromBytes(Uint8List(0)), throwsArgumentError);
+        expect(() => Uuid.fromBytes(Uint8List(17), 2),
             throwsArgumentError);
       });
     });
@@ -59,7 +59,7 @@ void main() {
       });
 
       test("Nil string creates Nil UUID", () {
-        expect(identical(new Uuid(nsStrings["nil"]), Uuid.nil), isTrue);
+        expect(identical(Uuid(nsStrings["nil"]), Uuid.nil), isTrue);
       });
 
       test("Nil strings are parsed to Nil UUID", () {
@@ -74,10 +74,10 @@ void main() {
         var bytes = l2b(fullList);
         for (int i = 0; i <= 7; i++) {
           bytes[8] = 0x00 | i << 5;
-          expect(new Uuid.fromBytes(bytes).variant, testVariants[i]);
+          expect(Uuid.fromBytes(bytes).variant, testVariants[i]);
 
           bytes[8] = 0x1F | i << 5;
-          expect(new Uuid.fromBytes(bytes).variant, testVariants[i]);
+          expect(Uuid.fromBytes(bytes).variant, testVariants[i]);
         }
       });
 
@@ -88,22 +88,22 @@ void main() {
 
         for (int v = 0; v <= 15; v++) {
           bytes[6] = 0x00 | v << 4;
-          expect(new Uuid.fromBytes(bytes).version, equals(v));
+          expect(Uuid.fromBytes(bytes).version, equals(v));
 
           bytes[6] = 0x0F | v << 4;
-          expect(new Uuid.fromBytes(bytes).version, equals(v));
+          expect(Uuid.fromBytes(bytes).version, equals(v));
         }
       });
     });
 
     group("Comparison", () {
       test("Equality operator overloading works", () {
-        expect(new Uuid.fromBytes(l2b(nsBytes["nil"])) == Uuid.nil, isTrue);
+        expect(Uuid.fromBytes(l2b(nsBytes["nil"])) == Uuid.nil, isTrue);
       });
 
       test("compareTo is implemented correctly", () {
-        var dns = new Uuid.fromBytes(l2b(nsBytes["dns"]));
-        var u = new Uuid.fromBytes(new Uint8List.fromList(<int>[
+        var dns = Uuid.fromBytes(l2b(nsBytes["dns"]));
+        var u = Uuid.fromBytes(Uint8List.fromList(<int>[
           0x7D, 0x44, 0x48, 0x40, //
           0x9D, 0xC0,
           0x11, 0xD1,
@@ -121,31 +121,31 @@ void main() {
       });
 
       test("Time-based UUIDs are compared by timestamp", () {
-        var newer = new Uuid("00000000-1233-1235-8000-000000000000");
-        var older = new Uuid("00000000-1234-1234-8000-000000000000");
+        var newer = Uuid("00000000-1233-1235-8000-000000000000");
+        var older = Uuid("00000000-1234-1234-8000-000000000000");
         expect(Comparable.compare(newer, older) > 0, isTrue);
 
         // "lexically" order is different
-        var a = new Uuid("00000000-1233-4235-8000-000000000000");
-        var b = new Uuid("00000000-1234-4234-8000-000000000000");
+        var a = Uuid("00000000-1233-4235-8000-000000000000");
+        var b = Uuid("00000000-1234-4234-8000-000000000000");
         expect(Comparable.compare(a, b) > 0, isFalse);
 
       });
 
       test("Node comparison works", () {
-        var ua = new Uuid("00000000-0000-1000-8000-100000000000");
-        var ub = new Uuid("00000000-0000-1000-8000-010000000000");
+        var ua = Uuid("00000000-0000-1000-8000-100000000000");
+        var ub = Uuid("00000000-0000-1000-8000-010000000000");
         expect(Comparable.compare(ua, ub) > 0, isTrue);
       });
 
       test("Same UUIDs have same hashCode", () {
-        var ua = new Uuid("00000000-0000-1000-8000-100000000000");
-        var ub = new Uuid("00000000-0000-1000-8000-100000000000");
+        var ua = Uuid("00000000-0000-1000-8000-100000000000");
+        var ub = Uuid("00000000-0000-1000-8000-100000000000");
         expect(ua.hashCode, ub.hashCode);
       });
 
       test("hashCode doesn't overflow", () {
-        var u = new Uuid("ffffffff-ffff-50ff-bfff-ffffffffffff");
+        var u = Uuid("ffffffff-ffff-50ff-bfff-ffffffffffff");
         expect(u.hashCode, 1073786624);
       });
     });
@@ -154,13 +154,13 @@ void main() {
       test("Returns same bytes", () {
         nsBytes.forEach((k, v) {
           var bytes = l2b(v);
-          expect(new Uuid.fromBytes(bytes).bytes, bytes);
+          expect(Uuid.fromBytes(bytes).bytes, bytes);
         });
       });
 
       test("Buffer", () {
-        var u1 = new Uuid.fromBytes(l2b(nsBytes["dns"]));
-        var u2 = new Uuid.fromBytes(l2b(nsBytes["url"]));
+        var u1 = Uuid.fromBytes(l2b(nsBytes["dns"]));
+        var u2 = Uuid.fromBytes(l2b(nsBytes["url"]));
         expect(u2.bytes, nsBytes["url"]);
         expect(u1.bytes, nsBytes["dns"]);
       });
@@ -169,7 +169,7 @@ void main() {
     group("Serialization", () {
       test("Returns correct string", () {
         nsBytes.forEach((String k, List<int> v) {
-          expect(new Uuid.fromBytes(l2b(v)).toString(), nsStrings[k]);
+          expect(Uuid.fromBytes(l2b(v)).toString(), nsStrings[k]);
         });
       });
     });

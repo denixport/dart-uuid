@@ -1,11 +1,11 @@
 import 'dart:typed_data';
 import 'package:uuid_type/uuid_type.dart';
 
-Uint8List l2b(List<int> list) => new Uint8List.fromList(list);
+Uint8List l2b(List<int> list) => Uint8List.fromList(list);
 
-Uuid testNil = new Uuid.fromBytes(l2b(nsBytes["nil"]));
+Uuid testNil = Uuid.fromBytes(l2b(nsBytes["nil"]));
 
-const nsStrings = const <String, String>{
+const nsStrings = <String, String>{
   "nil": "00000000-0000-0000-0000-000000000000",
   "dns": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
   "url": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
