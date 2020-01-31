@@ -78,7 +78,7 @@ class TimeBasedUuidGenerator {
   /// Clock sequence is initialized with random 14 bit value. If no [nodeId]
   /// is provided, it generates random 6 byte node ID
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
-      : this._nodeId = _getValidNodeId(nodeId) {
+      : _nodeId = _getValidNodeId(nodeId) {
     // make sure stopwatch is started
     _sw.start();
     // init buffer with node ID bytes
@@ -212,7 +212,7 @@ class NameBasedUuidGenerator {
   final Uint8List _nsBytes;
 
   /// Creates generator for [namespace]
-  NameBasedUuidGenerator(Uuid namespace) : this._nsBytes = namespace.bytes;
+  NameBasedUuidGenerator(Uuid namespace) : _nsBytes = namespace.bytes;
 
   /// Returns namespace [Uuid] for this generator
   Uuid get namespace => Uuid.fromBytes(_nsBytes);
@@ -252,7 +252,7 @@ class RandomBasedUuidGenerator {
   ///
   /// If no [rng] provided, it uses secure random generator returned by `math`
   /// [Random.secure]
-  RandomBasedUuidGenerator([Random rng]) : this.rng = rng ?? Random.secure();
+  RandomBasedUuidGenerator([Random rng]) : rng = rng ?? Random.secure();
 
   // shared byte buffer for UUIDs created by this generator
   static final Uint8List _byteBuffer = Uint8List(16);

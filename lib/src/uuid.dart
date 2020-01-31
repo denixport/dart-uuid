@@ -78,6 +78,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// First, compares by version
   /// then, if it's time-based v1 UUID, compares timestamps,
   /// then compares all bytes lexically
+  @override
   int compareTo(Uuid other) {
     int ver = version;
     int diff = ver - other.version;
@@ -103,6 +104,7 @@ abstract class Uuid implements Comparable<Uuid> {
   }
 
   /// Returns canonical string representation
+  @override
   String toString();
 
   // parses 2 hex chars into one byte
@@ -289,6 +291,7 @@ class _Uuid implements Uuid {
 
   const _Uuid._(this.x, this.y, this.z, this.w);
 
+  @override
   Uint8List get bytes => Uint8List.fromList(<int>[
         x >> 24, x >> 16, x >> 8, x, //
         y >> 24, y >> 16, y >> 8, y,
@@ -296,6 +299,7 @@ class _Uuid implements Uuid {
         w >> 24, w >> 16, w >> 8, w,
       ]);
 
+  @override
   Variant get variant {
     assert((z >> 29) >= 0 && (z >> 29) <= 7);
 
@@ -313,17 +317,20 @@ class _Uuid implements Uuid {
     return variants[z >> 29];
   }
 
+  @override
   int get version => (y & 0xF000) >> 12;
 
+  @override
   int get hashCode => (x ^ y) ^ (z ^ w);
 
+  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is _Uuid &&
-        this.x == other.x &&
-        this.y == other.y &&
-        this.z == other.z &&
-        this.w == other.w) {
+        x == other.x &&
+        y == other.y &&
+        z == other.z &&
+        w == other.w) {
       return true;
     } else if (other is Uuid) {
       return compareTo(other) == 0;
@@ -331,12 +338,16 @@ class _Uuid implements Uuid {
     return false;
   }
 
+  @override
   bool operator >(Uuid other) => compareTo(other) > 0;
 
+  @override
   bool operator >=(Uuid other) => compareTo(other) >= 0;
 
+  @override
   bool operator <(Uuid other) => compareTo(other) < 0;
-
+  
+  @override
   bool operator <=(Uuid other) => compareTo(other) <= 0;
 
   @override
@@ -380,6 +391,7 @@ class _Uuid implements Uuid {
     return -1 * other.compareTo(this);
   }
 
+  @override
   String toString() {
     const List<int> hexcu = <int>[
       0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, //
