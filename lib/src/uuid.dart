@@ -346,7 +346,7 @@ class _Uuid implements Uuid {
 
   @override
   bool operator <(Uuid other) => compareTo(other) < 0;
-  
+
   @override
   bool operator <=(Uuid other) => compareTo(other) <= 0;
 
