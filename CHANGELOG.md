@@ -1,3 +1,6 @@
+## 1.0.2
+  Release 
+
 ## 1.0.0-beta
 - More tests and documentation
 
