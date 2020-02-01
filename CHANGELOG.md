@@ -1,3 +1,6 @@
+## 1.1.0
+- Utility class for convinient UUID string generation and comparison
+
 ## 1.0.2
   Release 
 

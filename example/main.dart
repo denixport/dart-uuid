@@ -57,21 +57,36 @@ void main() {
   Uuid u;
 
   // generate time-based UUID (with random node ID and clock sequence)
-  var timeGen = TimeBasedUuidGenerator();
-  u = timeGen.generate();
+  u = TimeBasedUuidGenerator().generate();
   print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> 3ca0b269-5169-11e9-8a43-2351df82a100 (ver: 1 var: Variant.rfc4122)
+  // -> ... (ver: 1 var: Variant.rfc4122)
 
   // generate name + namespace based UUID
   var nsUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
-  var nameGen = NameBasedUuidGenerator(nsUrl);
-  u = nameGen.generate("https://www.dartlang.org/");
+  u = NameBasedUuidGenerator(nsUrl).generate("https://dart.dev/");
   print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> be147d8c-1052-5e2d-97d4-178c644b6ea9 (ver: 5 var: Variant.rfc4122)
+  // -> 51aa5a34-f12a-5843-89aa-2e687a910904 (ver: 5 var: Variant.rfc4122)
 
   // generate random-based UUID
-  var randGen = RandomBasedUuidGenerator();
-  u = randGen.generate();
+  u = RandomBasedUuidGenerator().generate();
   print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> c9321b3a-93b1-48bf-a842-b4eb3b2bc0e6 (ver: 4 var: Variant.rfc4122)
+  // -> ... (ver: 4 var: Variant.rfc4122)
+
+  //
+  // Utility
+  //
+
+  // generate time-based UUID
+  print(uuid.v1());
+
+  // generate random-based UUID
+  print(uuid.v4());
+
+  // generate name-based (SHA1) UUID
+  print(uuid.v5("6ba7b811-9dad-11d1-80b4-00c04fd430c8", "https://dart.dev/"));
+
+  // compre UUIDs
+  print(uuid.compare("6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+      "6ba7b811-9dad-11d1-80b4-00c04fd430c8"));
+  // -> 0    
 }
