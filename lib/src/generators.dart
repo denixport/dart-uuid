@@ -13,29 +13,28 @@ import 'uuid.dart';
 ///
 ///
 class TimeBasedUuidGenerator {
-  // offset between Gregorian and Unix epochs, in milliseconds
-  static const _epochOffset = (2440587 - 2299160) * 86400 * 1000;
+  // offset between Gregorian and Unix epochs in milliseconds
+  static const int _epochOffset = (2440587 - 2299160) * 86400 * 1000;
 
-  //
+  // RNG used for creating random node & clock sequence
   static final _rng = Random();
 
   //
   static final Stopwatch _sw = Stopwatch();
 
-  /// Frequency of the system's clock used by this generator
+  /// Frequency of the system clock used by this generator
   static final int clockFrequency = _sw.frequency;
 
   // how many ticks system's clock can generate per millisecond
   // TODO: notes on firefox (and safari?) weird behaviour
-  static final int _ticksPerMs = _sw.frequency ~/ 1000;
+  static final int _ticksPerMillis = clockFrequency ~/ 1000;
 
   // same but per 100ns interval, round up to 1 for low-res system clock
   static final int _ticksPer100Ns =
-      _sw.frequency ~/ 10000000 == 0 ? 1 : _sw.frequency ~/ 10000000;
+      (clockFrequency < 10000000) ? 1 : clockFrequency ~/ 10000000;
 
   // "zero" point in time from which all timestamps are calculated
-  static final int _zeroMs =
-      DateTime.now().millisecondsSinceEpoch + _epochOffset;
+  final int _zeroMs = DateTime.now().millisecondsSinceEpoch + _epochOffset;
 
   // clock sequence, initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
@@ -43,8 +42,8 @@ class TimeBasedUuidGenerator {
   // ticks used for last generated UUID
   int _lastTicks = 0;
 
-  // extra ticks counter for low-res clocks
-  int _extraTicks = 0;
+  // extra 100ns intervals counter for low-res clocks
+  int _extraIntervals = 0;
 
   // 6 bytes of node ID
   final Uint8List _nodeId;
@@ -80,7 +79,9 @@ class TimeBasedUuidGenerator {
   TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
       : _nodeId = _getValidNodeId(nodeId) {
     // make sure stopwatch is started
+    _sw.reset();
     _sw.start();
+
     // init buffer with node ID bytes
     for (int i = 0; i < 6; i++) {
       _byteBuffer[10 + i] = _nodeId[i];
@@ -101,22 +102,24 @@ class TimeBasedUuidGenerator {
 
     var sb = state.bytes;
 
-    var clockSeq = ((sb[8] << 8) | sb[9]) & 0x3FFF;
-    var nodeId = Uint8List(6);
+    final nodeId = Uint8List(6);
     for (int i = 0; i < 6; i++) {
       nodeId[i] = sb[10 + i];
     }
-
-    // timestamp of the state UUID
-    int utl = (sb[0] << 24) | (sb[1] << 16) | (sb[2] << 8) | sb[3];
-    int utmh = (sb[4] << 8) | sb[5] | ((sb[6] << 24) & 0x0F) | (sb[7] << 16);
 
     // create generator and get timestamp from it
     var g = TimeBasedUuidGenerator(nodeId);
     var gb = g.generate().bytes;
 
+    // timestamp of the state UUID
+    int utl = (sb[0] << 24) | (sb[1] << 16) | (sb[2] << 8) | sb[3];
+    int utmh = (sb[4] << 8) | sb[5] | ((sb[6] << 24) & 0x0F) | (sb[7] << 16);
+
+    // timestamp of newly generated UUID
     int gtl = (gb[0] << 24) | (gb[1] << 16) | (gb[2] << 8) | gb[3];
     int gtmh = (gb[4] << 8) | gb[5] | ((gb[6] << 24) & 0x0F) | (gb[7] << 16);
+
+    var clockSeq = ((sb[8] << 8) | sb[9]) & 0x3FFF;
 
     // if state is ahead of this generator, bump up clock sequence
     if ((gtmh & 0xFFFF) - (utmh & 0xFFFF) < 0 ||
@@ -145,7 +148,7 @@ class TimeBasedUuidGenerator {
     if (dt == 0) {
       // account for low res clocks
       // same tick, bump extra ticks counter
-      ++_extraTicks;
+      ++_extraIntervals;
     } else {
       if (dt < 0) {
         // clock regression, bump clock sequence
@@ -153,21 +156,23 @@ class TimeBasedUuidGenerator {
         _clockSeq &= 0x3FFF;
       }
       _lastTicks = ticks;
-      _extraTicks = 0;
+      _extraIntervals = 0;
     }
 
-    int ms = (ticks ~/ _ticksPerMs);
-    int ns = (ticks - ms * _ticksPerMs) ~/ _ticksPer100Ns + _extraTicks;
+    var ms = (ticks ~/ _ticksPerMillis);
+    var nsint =
+        (ticks - ms * _ticksPerMillis) ~/ _ticksPer100Ns + _extraIntervals;
 
     int timeLo, timeMidHi;
-    // compiler trick for faster math in Dart vs JS
+    // compiler trick for faster math in Dart VM vs JS
     if ((1 << 32) != 0) {
-      int ts = (ms + _zeroMs) * 10000 + ns;
+      // timestamp in 100ns intervals
+      var ts = (_zeroMs + ms) * 10000 + nsint;
       timeLo = ts & 0xFFFFFFFF;
       timeMidHi = ts >> 32;
     } else {
       ms += _zeroMs;
-      timeLo = ((ms & 0xFFFFFFF) * 10000 + ns) % 0x100000000;
+      timeLo = ((ms & 0xFFFFFFF) * 10000 + nsint) % 0x100000000;
       timeMidHi = (ms ~/ 0x100000000 * 10000) & 0xFFFFFFF;
     }
 
