@@ -7,6 +7,8 @@ analyzer:
     dead_code: error
     missing_required_param: error
     missing_return: error
+    omit_local_variable_types: info
+    prefer_single_quotes: info
     todo: ignore
     unused_element: error
     unused_import: error
