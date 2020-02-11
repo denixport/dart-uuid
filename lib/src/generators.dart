@@ -39,10 +39,10 @@ class TimeBasedUuidGenerator {
   // clock sequence, initialized with random value
   int _clockSeq = _rng.nextInt(1 << 14);
 
-  // ticks used for last generated UUID
+  // system clock ticks when last generated UUID
   int _lastTicks = 0;
 
-  // extra 100ns intervals counter for low-res clocks
+  // additional 100ns intervals for low-res clocks
   int _extraIntervals = 0;
 
   // 6 bytes of node ID
