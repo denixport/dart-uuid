@@ -68,6 +68,31 @@ void main() {
       var g = TimeBasedUuidGenerator.fromLastUuid(state);
       expect(g.clockSequence, 1);
     });
+
+    test("Multiple generators produce unique ids", () {
+      var umap = <Uuid, int>{};
+      var gens = <TimeBasedUuidGenerator>[
+        TimeBasedUuidGenerator(),
+        TimeBasedUuidGenerator(),
+        TimeBasedUuidGenerator(),
+        TimeBasedUuidGenerator(),
+        TimeBasedUuidGenerator()
+      ];
+
+      var gi = 0;
+      for (var i = 0; i < gens.length * 100; i++) {
+        var key = gens[gi].generate();
+
+        expect(umap.containsKey(key), isFalse);
+
+        umap[key] = gi;
+        gi++;
+        gi %= gens.length;
+      }
+
+    });
+
+
   });
 
   group("Random-based generator (v4)", () {
