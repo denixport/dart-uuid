@@ -1,14 +1,15 @@
+include: package:pedantic/analysis_options.yaml
 analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
   errors:
     dead_code: error
-    missing_required_param: warning
-    missing_return: warning
-    todo: info
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
     unused_element: error
-    unused_import: warning
+    unused_import: error
     unused_local_variable: error
 
 linter:
@@ -70,7 +71,6 @@ linter:
     - unnecessary_null_in_if_null_operators
     - unnecessary_this
     - unrelated_type_equality_checks
-    - use_function_type_syntax 	
     - use_function_type_syntax_for_parameters
     - use_rethrow_when_possible
     - valid_regexps
