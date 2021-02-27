@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:test/test.dart';
 import 'package:uuid_type/uuid_type.dart';
 
@@ -32,18 +33,13 @@ void main() {
     });
 
     test("Generates unique UUID sequence", () {
-      const N = 10000;
-      var uuids = List<Uuid>(N);
-
-      // generate
       var gen = TimeBasedUuidGenerator();
-      for (int i = 0; i < N; i++) {
-        uuids[i] = gen.generate();
-      }
+      const N = 10000;
+      var uuids = List.generate(N, (int index) => gen.generate());
 
       // check
       var prev = uuids[0];
-      for (int i = 1; i < N; i++) {
+      for (var i = 1; i < N; i++) {
         expect(uuids[i], greaterThan(prev));
         prev = uuids[i];
       }
@@ -89,10 +85,7 @@ void main() {
         gi++;
         gi %= gens.length;
       }
-
     });
-
-
   });
 
   group("Random-based generator (v4)", () {
@@ -106,7 +99,7 @@ void main() {
 
     test("Uses uint32 values correctly", () {
       var rnd =
-       RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
+          RandomMock(<int>[0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
 
       var expected = Uuid.fromBytes(l2b(const <int>[
         0xFF, 0xFF, 0xFF, 0xFF, //

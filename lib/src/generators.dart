@@ -6,7 +6,9 @@ library uuid_type.generators;
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List;
+
 import 'package:crypto/crypto.dart' show Hash, sha1;
+
 import 'uuid.dart';
 
 /// Generator of time-based v1 UUIDs
@@ -52,14 +54,14 @@ class TimeBasedUuidGenerator {
   final Uint8List _byteBuffer = Uint8List(16);
 
   // validate or get new random node ID
-  static Uint8List _getValidNodeId(Uint8List nodeId) {
+  static Uint8List _getValidNodeId(Uint8List? nodeId) {
     if (nodeId != null) {
       if (nodeId.length != 6) {
         throw ArgumentError("Node Id length should be 6 bytes");
       }
     } else {
       nodeId = Uint8List(6);
-      int u = _rng.nextInt(0xFFFFFFFF);
+      var u = _rng.nextInt(0xFFFFFFFF);
       nodeId[0] = (u >> 24) | 0x01; // | multicast bit
       nodeId[1] = u >> 16;
       nodeId[2] = u >> 8;
@@ -76,7 +78,7 @@ class TimeBasedUuidGenerator {
   ///
   /// Clock sequence is initialized with random 14 bit value. If no [nodeId]
   /// is provided, it generates random 6 byte node ID
-  TimeBasedUuidGenerator([Uint8List nodeId, @deprecated int clockSequence])
+  TimeBasedUuidGenerator([Uint8List? nodeId, @deprecated int? clockSequence])
       : _nodeId = _getValidNodeId(nodeId) {
     // make sure stopwatch is started
     _sw.reset();
@@ -227,18 +229,22 @@ class NameBasedUuidGenerator {
 
   /// Generates name-based v5 UUID for [name]
   Uuid generate(String name) {
-    assert(name != null);
-
-    var digest = hash.convert(_nsBytes + utf8.encode(name)).bytes;
+    final nameList = utf8.encode(name);
+    final k = List.generate(_nsBytes.length + nameList.length, (index) {
+      if (index < _nsBytes.length) {
+        return _nsBytes[index];
+      } else {
+        return nameList[index - _nsBytes.length];
+      }
+    });
+    var digest = hash.convert(k).bytes;
     assert(digest.length >= 16);
-
     for (int i = 0; i < 16; ++i) {
       _byteBuffer[i] = digest[i];
     }
 
     _byteBuffer[8] = (_byteBuffer[8] & 0xBF) | 0x80; // variant 1
     _byteBuffer[6] = (_byteBuffer[6] & 0x0F) | 0x50; // version 5
-
     return Uuid.fromBytes(_byteBuffer);
   }
 
@@ -257,7 +263,7 @@ class RandomBasedUuidGenerator {
   ///
   /// If no [rng] provided, it uses secure random generator returned by `math`
   /// [Random.secure]
-  RandomBasedUuidGenerator([Random rng]) : rng = rng ?? Random.secure();
+  RandomBasedUuidGenerator([Random? rng]) : rng = rng ?? Random.secure();
 
   // shared byte buffer for UUIDs created by this generator
   static final Uint8List _byteBuffer = Uint8List(16);

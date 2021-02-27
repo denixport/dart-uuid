@@ -3,7 +3,7 @@ import 'package:uuid_type/uuid_type.dart';
 
 Uint8List l2b(List<int> list) => Uint8List.fromList(list);
 
-Uuid testNil = Uuid.fromBytes(l2b(nsBytes["nil"]));
+Uuid testNil = Uuid.fromBytes(l2b(nsBytes["nil"]!));
 
 const nsStrings = <String, String>{
   "nil": "00000000-0000-0000-0000-000000000000",

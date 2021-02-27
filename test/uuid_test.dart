@@ -7,7 +7,7 @@ void main() {
   group("UUID", () {
     group("Constructing", () {
       test("Can be created from canonical string", () {
-        var u = Uuid(nsStrings["dns"]);
+        var u = Uuid(nsStrings["dns"]!);
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
@@ -25,7 +25,7 @@ void main() {
       });
 
       test("Can be created from byte array", () {
-        var u = Uuid.fromBytes(l2b(nsBytes["dns"]));
+        var u = Uuid.fromBytes(l2b(nsBytes["dns"]!));
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
@@ -59,7 +59,7 @@ void main() {
       });
 
       test("Nil string creates Nil UUID", () {
-        expect(identical(Uuid(nsStrings["nil"]), Uuid.nil), isTrue);
+        expect(identical(Uuid(nsStrings["nil"]!), Uuid.nil), isTrue);
       });
 
       test("Nil strings are parsed to Nil UUID", () {
@@ -98,11 +98,11 @@ void main() {
 
     group("Comparison", () {
       test("Equality operator overloading works", () {
-        expect(Uuid.fromBytes(l2b(nsBytes["nil"])) == Uuid.nil, isTrue);
+        expect(Uuid.fromBytes(l2b(nsBytes["nil"]!)) == Uuid.nil, isTrue);
       });
 
       test("compareTo is implemented correctly", () {
-        var dns = Uuid.fromBytes(l2b(nsBytes["dns"]));
+        var dns = Uuid.fromBytes(l2b(nsBytes["dns"]!));
         var u = Uuid.fromBytes(Uint8List.fromList(<int>[
           0x7D, 0x44, 0x48, 0x40, //
           0x9D, 0xC0,
@@ -159,8 +159,8 @@ void main() {
       });
 
       test("Buffer", () {
-        var u1 = Uuid.fromBytes(l2b(nsBytes["dns"]));
-        var u2 = Uuid.fromBytes(l2b(nsBytes["url"]));
+        var u1 = Uuid.fromBytes(l2b(nsBytes["dns"]!));
+        var u2 = Uuid.fromBytes(l2b(nsBytes["url"]!));
         expect(u2.bytes, nsBytes["url"]);
         expect(u1.bytes, nsBytes["dns"]);
       });

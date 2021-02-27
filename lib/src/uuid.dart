@@ -139,7 +139,7 @@ abstract class Uuid implements Comparable<Uuid> {
   static final _byteBuffer = Uint8List(16);
 
   // parses canonical UUID string
-  static FormatException _parseCanonical(String source) {
+  static FormatException? _parseCanonical(String source) {
     const bytePositions = <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
     ];
@@ -159,9 +159,9 @@ abstract class Uuid implements Comparable<Uuid> {
       }
     }
 
-    int i = 0;
-    for (int pos in bytePositions) {
-      int b = _parseHexByte(chars[pos], chars[pos + 1]);
+    var i = 0;
+    for (var pos in bytePositions) {
+      final b = _parseHexByte(chars[pos], chars[pos + 1]);
       if (b < 0) {
         return FormatException("Invalid hex char", source, pos + b + 2);
       }
@@ -173,7 +173,7 @@ abstract class Uuid implements Comparable<Uuid> {
 
   // Fills _byteBuffer with bytes decoded from hex
   // returns FormatException if parsing fails
-  static FormatException _parse(String source) {
+  static FormatException? _parse(String source) {
     if (source.length == 36) {
       return _parseCanonical(source);
     } else if (source.length == 1 + 36 + 1) {
@@ -235,7 +235,7 @@ abstract class Uuid implements Comparable<Uuid> {
   ///
   /// Like [parse] except it returns `null` for invalid inputs
   //  instead of throwing.
-  static Uuid tryParse(String source) {
+  static Uuid? tryParse(String source) {
     if (_parse(source) != null) return null;
     return Uuid.fromBytes(_byteBuffer);
   }
@@ -261,8 +261,6 @@ class _Uuid implements Uuid {
 
   /// Implements [Uuid.fromBytes]
   factory _Uuid.fromBytes(Uint8List bytes, [int offset = 0]) {
-    assert(bytes != null);
-
     if (offset < 0 || (offset + 16 > bytes.length)) {
       throw ArgumentError('Invalid offset');
     }

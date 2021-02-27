@@ -4,6 +4,7 @@
 library uuid_type.util;
 
 import 'dart:typed_data' show Uint8List;
+
 import 'generators.dart';
 import 'uuid.dart';
 
@@ -12,11 +13,10 @@ final uuid = UuidUtil._();
 
 /// UUID utility class for convinient UUID string gemeration
 class UuidUtil {
-
   const UuidUtil._();
 
   /// Generates time-based UUID string
-  String v1([Uint8List nodeId]) {
+  String v1([Uint8List? nodeId]) {
     return TimeBasedUuidGenerator(nodeId).generate().toString();
   }
 
@@ -29,10 +29,9 @@ class UuidUtil {
   String v5(String namespace, String name) {
     return NameBasedUuidGenerator(Uuid(namespace)).generate(name).toString();
   }
-  
-  /// Compares to UUID strings 
+
+  /// Compares to UUID strings
   int compare(String uuid1, String uuid2) {
     return Uuid(uuid1).compareTo(Uuid(uuid2));
   }
-
 }
