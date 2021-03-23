@@ -1,57 +1,43 @@
 import 'dart:typed_data';
+
 import 'package:uuid_type/uuid_type.dart';
 
 Uint8List l2b(List<int> list) => Uint8List.fromList(list);
 
-Uuid testNil = Uuid.fromBytes(l2b(nsBytes["nil"]));
+Uuid testNil = Uuid.fromBytes(nilBytes);
 
-const nsStrings = <String, String>{
-  "nil": "00000000-0000-0000-0000-000000000000",
-  "dns": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-  "url": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
-  "oid": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
-  "x500": "6ba7b814-9dad-11d1-80b4-00c04fd430c8",
-};
+const dnsNsString = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+const urlNsString = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+const oidNsString = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
+const x500NsString = '6ba7b814-9dad-11d1-80b4-00c04fd430c8';
 
-const nsBytes = <String, List<int>>{
-  "nil": <int>[
-    0x00, 0x00, 0x00, 0x00, //
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-  ],
-  "dns": [
-    0x6B, 0xA7, 0xB8, 0x10, //
-    0x9D, 0xAD,
-    0x11, 0xD1,
-    0x80, 0xB4,
-    0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
-  ],
-  "url": [
-    0x6B, 0xA7, 0xB8, 0x11, //
-    0x9D, 0xAD,
-    0x11, 0xD1,
-    0x80, 0xB4,
-    0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
-  ],
-  "oid": [
-    0x6B, 0xA7, 0xB8, 0x12, //
-    0x9D, 0xAD,
-    0x11, 0xD1,
-    0x80, 0xB4,
-    0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
-  ],
-  "x500": [
-    0x6B, 0xA7, 0xB8, 0x14, //
-    0x9D, 0xAD,
-    0x11, 0xD1,
-    0x80, 0xB4,
-    0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
-  ],
-};
+var x = <int>[1, 2, 3] as Uint8List;
 
-const fullList = <int>[
+final nilBytes = const <int>[
+  0x00, 0x00, 0x00, 0x00, //
+  0x00, 0x00,
+  0x00, 0x00,
+  0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+] as Uint8List;
+
+final dnsNsBytes = l2b(<int>[
+  0x6B, 0xA7, 0xB8, 0x10, //
+  0x9D, 0xAD,
+  0x11, 0xD1,
+  0x80, 0xB4,
+  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
+]);
+
+final urlNsBytes = l2b(<int>[
+  0x6B, 0xA7, 0xB8, 0x11, //
+  0x9D, 0xAD,
+  0x11, 0xD1,
+  0x80, 0xB4,
+  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
+]);
+
+const maxByteList = <int>[
   0xFF, 0xFF, 0xFF, 0xFF, //
   0xFF, 0xFF,
   0xFF, 0xFF,
@@ -120,9 +106,9 @@ const testVariants = <Variant>[
 ];
 
 const testNamesDns = <String>[
-  "hello.example.com", "fdda765f-fc57-5604-a269-52a7df8164ec", //
-  "www.example.com", "2ed6657d-e927-568b-95e1-2665a8aea6a2",
-  "python.org", "886313e1-3b8a-5372-9b90-0c9aee199e5d",
-  "Bücher.example", "3b2e4e71-46e9-5d45-bb2b-0384d899603a",
-  "дарт.рф", "ee15950c-7674-5695-a2dc-11d0ed0a7fdd"
+  'hello.example.com', 'fdda765f-fc57-5604-a269-52a7df8164ec', //
+  'www.example.com', '2ed6657d-e927-568b-95e1-2665a8aea6a2',
+  'python.org', '886313e1-3b8a-5372-9b90-0c9aee199e5d',
+  'Bücher.example', '3b2e4e71-46e9-5d45-bb2b-0384d899603a',
+  'дарт.рф', 'ee15950c-7674-5695-a2dc-11d0ed0a7fdd'
 ];

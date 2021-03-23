@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:uuid_type/uuid_type.dart';
 
 void main() {
@@ -6,15 +7,15 @@ void main() {
   // UUID type
   //
 
-  // create UUID from canonical string
-  Uuid u1 = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+  // create UUID from string
+  var u1 = Uuid.parse('6ba7b811-9dad-11d1-80b4-00c04fd430c8');
 
   // print version & variant
-  print("$u1 (ver: ${u1.version} var: ${u1.variant})");
-  // -> ver: = 1 var: Variant.rfc4122
+  print('$u1 (version: ${u1.version} variant: ${u1.variant})');
+  // -> version: = 1 variant: Variant.rfc4122
 
   // create UUID from byte array
-  Uuid u2 = Uuid.fromBytes(Uint8List.fromList(<int>[
+  var u2 = Uuid.fromBytes(Uint8List.fromList(<int>[
     0x6b, 0xa7, 0xb8, 0x11, //
     0x9d, 0xad,
     0x11, 0xd1,
@@ -28,27 +29,33 @@ void main() {
   print(u2); // -> 6ba7b811-9dad-11d1-80b4-00c04fd430c8
 
   // parse URN
-  Uuid u3 = Uuid.parse("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+  var u3 = Uuid.parse('urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8');
 
   // UUIDs are equal
   print(u3 == u1); // -> true
 
   // parse GUID
-  Uuid u4 = Uuid.parse("{6BA7B811-9DAD-11D1-80B4-00C04FD430C8}");
+  var u4 = Uuid.parse('{6BA7B811-9DAD-11D1-80B4-00C04FD430C8}');
 
   // UUIDs are equal
   print(u4 == u1); // -> true
 
   // create old NCS UUID (example from AIX docs )
-  Uuid u5 = Uuid.fromBytes(Uint8List.fromList(<int>[
+  var u5 = Uuid.fromBytes(Uint8List.fromList(const <int>[
     0x34, 0xdc, 0x23, 0xaf, //
     0xf0, 0x00,
     0x00, 0x00,
     0x0d,
     0x00, 0x00, 0x7c, 0x5f, 0x00, 0x00, 0x00
   ]));
-  print("$u5 (ver: ${u5.version} var: ${u5.variant})");
-  // -> 34dc23af-f000-0000-0d00-007c5f000000 (ver: 0 var: Variant.ncs)
+  print('$u5 (version: ${u5.version} variant: ${u5.variant})');
+  // -> 34dc23af-f000-0000-0d00-007c5f000000 (version: 0 variant: Variant.ncs)
+
+  // compare time-based UUIDs
+  u1 = Uuid.parse('846f6b72-8c28-11eb-8b99-9b0e27e8a471');
+  u2 = Uuid.parse('846f7338-8c28-11eb-8ba2-9769eccf7efc');
+  print(u2 >= u1);
+  // -> true
 
   //
   // Generators
@@ -56,37 +63,38 @@ void main() {
 
   Uuid u;
 
-  // generate time-based UUID (with random node ID and clock sequence)
-  u = TimeBasedUuidGenerator().generate();
-  print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> ... (ver: 1 var: Variant.rfc4122)
+  // generate time-based UUID (with random node ID)
+  u = TimeUuidGenerator().generate();
+  print('$u (version: ${u.version} variant: ${u.variant})');
+  // -> ... (version: 1 variant: Variant.rfc4122)
 
   // generate name + namespace based UUID
-  var nsUrl = Uuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
-  u = NameBasedUuidGenerator(nsUrl).generate("https://dart.dev/");
-  print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> 51aa5a34-f12a-5843-89aa-2e687a910904 (ver: 5 var: Variant.rfc4122)
+  u = NameUuidGenerator(NameUuidGenerator.urlNamespace)
+      .generateFromString('https://dart.dev/');
+  print('$u (version: ${u.version} variant: ${u.variant})');
+  // -> 51aa5a34-f12a-5843-89aa-2e687a910904 (version: 5 variant: Variant.rfc4122)
 
   // generate random-based UUID
-  u = RandomBasedUuidGenerator().generate();
-  print("$u (ver: ${u.version} var: ${u.variant})");
-  // -> ... (ver: 4 var: Variant.rfc4122)
+  u = RandomUuidGenerator().generate();
+  print('$u (version: ${u.version} variant: ${u.variant})');
+  // -> ... (version: 4 variant: Variant.rfc4122)
 
   //
   // Utility
   //
 
-  // generate time-based UUID
+  // generate time-based UUID string
   print(uuid.v1());
 
-  // generate random-based UUID
+  // generate random-based UUID string
   print(uuid.v4());
 
-  // generate name-based (SHA1) UUID
-  print(uuid.v5("6ba7b811-9dad-11d1-80b4-00c04fd430c8", "https://dart.dev/"));
+  // generate name-based (SHA1) UUID string
+  print(uuid.v5('6ba7b811-9dad-11d1-80b4-00c04fd430c8', 'https://dart.dev/'));
+  // -> 51aa5a34-f12a-5843-89aa-2e687a910904
 
-  // compre UUIDs
-  print(uuid.compare("6ba7b811-9dad-11d1-80b4-00c04fd430c8",
-      "6ba7b811-9dad-11d1-80b4-00c04fd430c8"));
-  // -> 0    
+  // compare UUIDs
+  print(uuid.compare('6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+      '6ba7b811-9dad-11d1-80b4-00c04fd430c8'));
+  // -> 0
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2021, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 library uuid_type;

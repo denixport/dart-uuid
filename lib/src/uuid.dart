@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2021, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 library uuid_type;
@@ -27,25 +27,14 @@ abstract class Uuid implements Comparable<Uuid> {
   /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
   static Uuid get nil => Uuid.fromBytes(Uint8List(16));
 
-  /// Creates a new [Uuid] from canonical string representation
-  ///
-  /// If argument is not a valid UUID string `FormatException` is thrown.
-  /// For parsing various UUID formats use [Uuid.parse]
-  factory Uuid(String source) {
-    var e = _parseCanonical(source);
-    if (e != null) throw e;
-
-    return Uuid.fromBytes(_byteBuffer);
-  }
+  // Shared buffer for byte representation for all instances
+  static final _buffer = Uint8List(16);
 
   /// Creates [Uuid] from byte array
   ///
   /// Optional [offset] is used to read 16 bytes of UUID from larger arrays
   /// Would return [Uuid.nil] when zero byte array is provided
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
-
-  /// Byte array representing this UUID
-  Uint8List get bytes;
 
   @override
   int get hashCode;
@@ -80,22 +69,24 @@ abstract class Uuid implements Comparable<Uuid> {
   /// then compares all bytes lexically
   @override
   int compareTo(Uuid other) {
-    int ver = version;
-    int diff = ver - other.version;
+    final ver = version;
+    var diff = ver - other.version;
+
     if (diff != 0) return diff;
 
-    var a = bytes;
-    var b = other.bytes;
+    var a = toBytes();
+    var b = other.toBytes();
 
     if (ver == 1) {
-      for (int pos in const <int>[7, 4, 5, 0, 1, 2, 3]) {
+      for (var pos in const <int>[7, 4, 5, 0, 1, 2, 3]) {
         diff = a[pos] - b[pos];
         if (diff != 0) return diff;
       }
       return 0;
     }
 
-    for (int pos = 0; pos < 16; pos++) {
+    // other versions, compare in lexicographical order
+    for (var pos = 0; pos < 16; pos++) {
       diff = a[pos] - b[pos];
       if (diff != 0) return diff;
     }
@@ -103,21 +94,23 @@ abstract class Uuid implements Comparable<Uuid> {
     return 0;
   }
 
+  /// Returns byte array of this UUID
+  Uint8List toBytes();
+
   /// Returns canonical string representation
   @override
   String toString();
 
-  // parses 2 hex chars into one byte
-  // returns value < 0 if parsing fails
-  static int _parseHexByte(int c1, int c2) {
-    const List<int> hexBytes = <int>[
+  // Converts 2 hex chars into one byte, returns value < 0 if not hex chars
+  static int _hexChars2Byte(int c1, int c2) {
+    const hexBytes = <int>[
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, //
-      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0f,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
     ];
 
     c1 -= 0x30;
@@ -126,90 +119,82 @@ abstract class Uuid implements Comparable<Uuid> {
     c2 -= 0x30;
     if (c2 < 0 || c2 >= hexBytes.length) return -1;
 
-    int b1 = hexBytes[c1];
-    if (b1 == 0xFF) return -2;
+    var b1 = hexBytes[c1];
+    if (b1 == 0xff) return -2;
 
-    int b2 = hexBytes[c2];
-    if (b2 == 0xFF) return -1;
+    var b2 = hexBytes[c2];
+    if (b2 == 0xff) return -1;
 
     return (b1 << 4) | b2;
   }
 
-  /// Shared buffer for byte representation for all instances
-  static final _byteBuffer = Uint8List(16);
-
-  // parses canonical UUID string
-  static FormatException _parseCanonical(String source) {
+  // parses standard UUID string into _buffer
+  static FormatException? _parseStd(String source) {
     const bytePositions = <int>[
       0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
     ];
     const dashPositions = <int>[8, 13, 18, 23];
 
-    if (source.length != 36) {
-      return FormatException(
-          "UUID string has invalid length (${source.length})", source);
-    }
-
     var chars = source.codeUnits;
+    assert(chars.length == 36);
 
     // check '-' positions
-    for (int pos in dashPositions) {
-      if (chars[pos] != 0x2D) {
-        return FormatException("Separator char expected", source, pos);
+    for (var pos in dashPositions) {
+      if (chars[pos] != 0x2d) {
+        return FormatException('Separator char expected', source, pos);
       }
     }
 
-    int i = 0;
-    for (int pos in bytePositions) {
-      int b = _parseHexByte(chars[pos], chars[pos + 1]);
+    var i = 0;
+    for (var pos in bytePositions) {
+      var b = _hexChars2Byte(chars[pos], chars[pos + 1]);
       if (b < 0) {
-        return FormatException("Invalid hex char", source, pos + b + 2);
+        return FormatException('Invalid hex char', source, pos + b + 2);
       }
-      _byteBuffer[i++] = b;
+      _buffer[i++] = b;
     }
 
     return null;
   }
 
-  // Fills _byteBuffer with bytes decoded from hex
-  // returns FormatException if parsing fails
-  static FormatException _parse(String source) {
+  // Parses UUID string into _buffer, returns FormatException if parsing fails
+  static FormatException? _parse(String source) {
     if (source.length == 36) {
-      return _parseCanonical(source);
+      return _parseStd(source);
     } else if (source.length == 1 + 36 + 1) {
       // GUID
       if (!(source[0] == '{' && source[source.length - 1] == '}')) {
-        return FormatException("Invalid GUID string", source);
+        return FormatException('Invalid GUID string', source);
       }
-      return _parseCanonical(source.substring(1, source.length - 1));
+      return _parseStd(source.substring(1, source.length - 1));
     } else if (source.length == 1 + 32 + 1) {
       // hex GUID
       if (!(source[0] == '{' && source[source.length - 1] == '}')) {
-        return FormatException("Invalid GUID string", source);
+        return FormatException('Invalid GUID string', source);
       }
       source = source.substring(1, source.length - 1);
     } else if (source.length == 9 + 36) {
       // URN
       if (!source.startsWith('urn:uuid:')) {
-        return FormatException("Invalid UUID URN string", source);
+        return FormatException('Invalid UUID URN string', source);
       }
-      return _parseCanonical(source.substring(9));
+      return _parseStd(source.substring(9));
     }
 
     if (source.length != 32) {
-      return FormatException("Invalid UUID hex string length", source);
+      return FormatException('Invalid UUID hex string length', source);
     }
 
     // parse 32-char hex
 
     var chars = source.codeUnits;
 
-    for (int i = 0; i < 16; i++) {
-      int b = _parseHexByte(chars[2 * i], chars[2 * i + 1]);
+    for (var i = 0; i < 16; i++) {
+      var b = _hexChars2Byte(chars[2 * i], chars[2 * i + 1]);
       if (b < 0) {
-        return FormatException("Invalid hex char", source, 2 * i + b + 2);
+        return FormatException('Invalid hex char', source, 2 * i + b + 2);
       }
-      _byteBuffer[i] = b;
+      _buffer[i] = b;
     }
 
     return null;
@@ -228,24 +213,27 @@ abstract class Uuid implements Comparable<Uuid> {
   static Uuid parse(String source) {
     var e = _parse(source);
     if (e != null) throw e;
-    return Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_buffer);
   }
 
   /// Parses [source] as [Uuid]. Parsing is case insensitive.
   ///
   /// Like [parse] except it returns `null` for invalid inputs
-  //  instead of throwing.
-  static Uuid tryParse(String source) {
+  ///  instead of throwing.
+  static Uuid? tryParse(String source) {
     if (_parse(source) != null) return null;
-    return Uuid.fromBytes(_byteBuffer);
+    return Uuid.fromBytes(_buffer);
   }
 }
 
 class _Uuid implements Uuid {
   static const nil = _Uuid._(0, 0, 0, 0);
 
-  // Buffer to hold 36 chars of canonical string representation
-  static final Uint8List _stringBuffer = Uint8List.fromList(const <int>[
+  // Shared buffer for byte representation for all instances
+  static final _buffer = Uint8List(16);
+
+  // Shared buffer of canonical string representation
+  static final Uint8List _strBuffer = Uint8List.fromList(const <int>[
     0, 0, 0, 0, 0, 0, 0, 0, 0x2D, //
     0, 0, 0, 0, 0x2D,
     0, 0, 0, 0, 0x2D,
@@ -261,28 +249,26 @@ class _Uuid implements Uuid {
 
   /// Implements [Uuid.fromBytes]
   factory _Uuid.fromBytes(Uint8List bytes, [int offset = 0]) {
-    assert(bytes != null);
-
     if (offset < 0 || (offset + 16 > bytes.length)) {
       throw ArgumentError('Invalid offset');
     }
 
-    int x = (bytes[offset] << 24) |
-        (bytes[offset + 1] << 16) |
-        (bytes[offset + 2] << 8) |
-        bytes[offset + 3];
-    int y = (bytes[offset + 4] << 24) |
-        (bytes[offset + 5] << 16) |
-        (bytes[offset + 6] << 8) |
-        bytes[offset + 7];
-    int z = (bytes[offset + 8] << 24) |
-        (bytes[offset + 9] << 16) |
-        (bytes[offset + 10] << 8) |
-        bytes[offset + 11];
-    int w = (bytes[offset + 12] << 24) |
-        (bytes[offset + 13] << 16) |
-        (bytes[offset + 14] << 8) |
-        bytes[offset + 15];
+    var x = (bytes[offset + 0] << 24) |
+    (bytes[offset + 1] << 16) |
+    (bytes[offset + 2] << 8) |
+    bytes[offset + 3];
+    var y = (bytes[offset + 4] << 24) |
+    (bytes[offset + 5] << 16) |
+    (bytes[offset + 6] << 8) |
+    bytes[offset + 7];
+    var z = (bytes[offset + 8] << 24) |
+    (bytes[offset + 9] << 16) |
+    (bytes[offset + 10] << 8) |
+    bytes[offset + 11];
+    var w = (bytes[offset + 12] << 24) |
+    (bytes[offset + 13] << 16) |
+    (bytes[offset + 14] << 8) |
+    bytes[offset + 15];
 
     if ((y | z | x | w) == 0) return nil;
 
@@ -290,14 +276,6 @@ class _Uuid implements Uuid {
   }
 
   const _Uuid._(this.x, this.y, this.z, this.w);
-
-  @override
-  Uint8List get bytes => Uint8List.fromList(<int>[
-        x >> 24, x >> 16, x >> 8, x, //
-        y >> 24, y >> 16, y >> 8, y,
-        z >> 24, z >> 16, z >> 8, z,
-        w >> 24, w >> 16, w >> 8, w,
-      ]);
 
   @override
   Variant get variant {
@@ -352,89 +330,109 @@ class _Uuid implements Uuid {
 
   @override
   int compareTo(Uuid other) {
-    int ver = version;
+    final ver = version;
+    var diff = ver - other.version;
 
-    int diff = ver - other.version;
     if (diff != 0) return diff;
 
-    if (other is _Uuid) {
-      // compare timestamps for v1 UUIDs
-      if (ver == 1) {
-        // time hi
-        diff = (y & 0xFFFF) - (other.y & 0xFFFF);
-        if (diff != 0) return diff;
+    if (other is! _Uuid) return -1 * other.compareTo(this);
 
-        // time mid
-        diff = (y >> 16) - (other.y >> 16);
-        if (diff != 0) return diff;
-
-        // time lo
-        diff = x - other.x;
-        if (diff != 0) return diff;
-      } else {
-        diff = x - other.x;
-        if (diff != 0) return diff;
-
-        diff = y - other.y;
-        if (diff != 0) return diff;
-      }
-
-      diff = z - other.z;
+    // compare timestamps for v1 UUIDs
+    if (ver == 1) {
+      // time hi
+      diff = (y & 0xffff) - (other.y & 0xffff);
       if (diff != 0) return diff;
 
-      diff = w - other.w;
+      // time mid
+      diff = (y >> 16) - (other.y >> 16);
       if (diff != 0) return diff;
 
-      return 0;
+      // time lo
+      diff = x - other.x;
+      if (diff != 0) return diff;
+    } else {
+      diff = x - other.x;
+      if (diff != 0) return diff;
+
+      diff = y - other.y;
+      if (diff != 0) return diff;
     }
 
-    return -1 * other.compareTo(this);
+    diff = z - other.z;
+    if (diff != 0) return diff;
+
+    diff = w - other.w;
+    if (diff != 0) return diff;
+
+    return 0;
+  }
+
+  @override
+  Uint8List toBytes() {
+    _buffer[0] = x >> 24;
+    _buffer[1] = x >> 16;
+    _buffer[2] = x >> 8;
+    _buffer[3] = x;
+    _buffer[4] = y >> 24;
+    _buffer[5] = y >> 16;
+    _buffer[6] = y >> 8;
+    _buffer[7] = y;
+    _buffer[8] = z >> 24;
+    _buffer[9] = z >> 16;
+    _buffer[10] = z >> 8;
+    _buffer[11] = z;
+    _buffer[12] = w >> 24;
+    _buffer[13] = w >> 16;
+    _buffer[14] = w >> 8;
+    _buffer[15] = w;
+
+    return _buffer.sublist(0);
   }
 
   @override
   String toString() {
-    const List<int> hexcu = <int>[
-      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, //
-      0x61, 0x62, 0x63, 0x64, 0x65, 0x66
+    const hexcu = <int>[
+      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, // 0-9
+      0x61, 0x62, 0x63, 0x64, 0x65, 0x66 // a-f
     ];
 
-    _stringBuffer[0] = hexcu[((x >> 24) & 0xFF) >> 4];
-    _stringBuffer[1] = hexcu[(x >> 24) & 0x0F];
-    _stringBuffer[2] = hexcu[((x >> 16) & 0xFF) >> 4];
-    _stringBuffer[3] = hexcu[(x >> 16) & 0x0F];
-    _stringBuffer[4] = hexcu[((x >> 8) & 0xFF) >> 4];
-    _stringBuffer[5] = hexcu[(x >> 8) & 0x0F];
-    _stringBuffer[6] = hexcu[(x & 0xFF) >> 4];
-    _stringBuffer[7] = hexcu[x & 0x0F];
+    _strBuffer[0] = hexcu[((x >> 24) & 0xff) >> 4];
+    _strBuffer[1] = hexcu[(x >> 24) & 0x0f];
+    _strBuffer[2] = hexcu[((x >> 16) & 0xff) >> 4];
+    _strBuffer[3] = hexcu[(x >> 16) & 0x0f];
+    _strBuffer[4] = hexcu[((x >> 8) & 0xff) >> 4];
+    _strBuffer[5] = hexcu[(x >> 8) & 0x0f];
+    _strBuffer[6] = hexcu[(x & 0xff) >> 4];
+    _strBuffer[7] = hexcu[x & 0x0f];
 
-    _stringBuffer[9] = hexcu[((y >> 24) & 0xFF) >> 4];
-    _stringBuffer[10] = hexcu[(y >> 24) & 0x0F];
-    _stringBuffer[11] = hexcu[((y >> 16) & 0xFF) >> 4];
-    _stringBuffer[12] = hexcu[(y >> 16) & 0x0F];
+    _strBuffer[9] = hexcu[((y >> 24) & 0xff) >> 4];
+    _strBuffer[10] = hexcu[(y >> 24) & 0x0f];
+    _strBuffer[11] = hexcu[((y >> 16) & 0xff) >> 4];
+    _strBuffer[12] = hexcu[(y >> 16) & 0x0f];
 
-    _stringBuffer[14] = hexcu[((y >> 8) & 0xFF) >> 4];
-    _stringBuffer[15] = hexcu[(y >> 8) & 0x0F];
-    _stringBuffer[16] = hexcu[(y & 0xFF) >> 4];
-    _stringBuffer[17] = hexcu[y & 0x0F];
+    _strBuffer[14] = hexcu[((y >> 8) & 0xff) >> 4];
+    _strBuffer[15] = hexcu[(y >> 8) & 0x0f];
+    _strBuffer[16] = hexcu[(y & 0xff) >> 4];
+    _strBuffer[17] = hexcu[y & 0x0f];
 
-    _stringBuffer[19] = hexcu[((z >> 24) & 0xFF) >> 4];
-    _stringBuffer[20] = hexcu[(z >> 24) & 0x0F];
-    _stringBuffer[21] = hexcu[((z >> 16) & 0xFF) >> 4];
-    _stringBuffer[22] = hexcu[(z >> 16) & 0x0F];
+    _strBuffer[19] = hexcu[((z >> 24) & 0xff) >> 4];
+    _strBuffer[20] = hexcu[(z >> 24) & 0x0f];
+    _strBuffer[21] = hexcu[((z >> 16) & 0xff) >> 4];
+    _strBuffer[22] = hexcu[(z >> 16) & 0x0f];
 
-    _stringBuffer[24] = hexcu[((z >> 8) & 0xFF) >> 4];
-    _stringBuffer[25] = hexcu[(z >> 8) & 0x0F];
-    _stringBuffer[26] = hexcu[(z & 0xFF) >> 4];
-    _stringBuffer[27] = hexcu[z & 0x0F];
-    _stringBuffer[28] = hexcu[((w >> 24) & 0xFF) >> 4];
-    _stringBuffer[29] = hexcu[(w >> 24) & 0x0F];
-    _stringBuffer[30] = hexcu[((w >> 16) & 0xFF) >> 4];
-    _stringBuffer[31] = hexcu[(w >> 16) & 0x0F];
-    _stringBuffer[32] = hexcu[((w >> 8) & 0xFF) >> 4];
-    _stringBuffer[33] = hexcu[(w >> 8) & 0x0F];
-    _stringBuffer[34] = hexcu[(w & 0xFF) >> 4];
-    _stringBuffer[35] = hexcu[w & 0x0F];
+    _strBuffer[24] = hexcu[((z >> 8) & 0xff) >> 4];
+    _strBuffer[25] = hexcu[(z >> 8) & 0x0f];
+    _strBuffer[26] = hexcu[(z & 0xff) >> 4];
+    _strBuffer[27] = hexcu[z & 0x0f];
+    _strBuffer[28] = hexcu[((w >> 24) & 0xff) >> 4];
+    _strBuffer[29] = hexcu[(w >> 24) & 0x0f];
+    _strBuffer[30] = hexcu[((w >> 16) & 0xff) >> 4];
+    _strBuffer[31] = hexcu[(w >> 16) & 0x0f];
+    _strBuffer[32] = hexcu[((w >> 8) & 0xff) >> 4];
+    _strBuffer[33] = hexcu[(w >> 8) & 0x0f];
+    _strBuffer[34] = hexcu[(w & 0xff) >> 4];
+    _strBuffer[35] = hexcu[w & 0x0f];
 
-    return String.fromCharCodes(_stringBuffer);
+    return String.fromCharCodes(_strBuffer);
   }
 }
