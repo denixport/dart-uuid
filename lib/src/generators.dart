@@ -6,7 +6,9 @@ library uuid_type.generators;
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List, UnmodifiableUint8ListView;
+
 import 'package:crypto/crypto.dart' show sha1;
+
 import 'uuid.dart';
 
 /// Generator of time-based v1 UUIDs
@@ -126,8 +128,6 @@ class TimeUuidGenerator {
 
   /// Returns Node ID for this generator
   UnmodifiableUint8ListView get nodeId => UnmodifiableUint8ListView(_nodeId);
-
-  static int get zero => _zeroMs;
 
   /// Generates UUID for current time
   Uuid generate() {
