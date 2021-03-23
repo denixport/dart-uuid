@@ -1,4 +1,4 @@
-# UUID type for Dart 2
+# UUID type for Dart
 [![Build Status](https://travis-ci.org/denixport/dart-uuid.svg?branch=master)](https://travis-ci.org/denixport/dart-uuid)
 ![Pub](https://img.shields.io/pub/vpre/uuid_type.svg)
 ![GitHub](https://img.shields.io/github/license/denixport/dart-uuid.svg)
@@ -22,8 +22,8 @@ RFC 4122 Version support:
 - [x] v5, based on SHA-1 hashing (RFC 4122)
 
 ## Requirements
-- Dart 2 (tested with >=2.0.0). Should also work with Dart 1.24, but not tested.
-- `crypto` package to generate name based UUIDs
+- Dart SDK >- 2.12.0
+- `crypto` package 
 
 ## Getting Started
 
@@ -31,7 +31,7 @@ RFC 4122 Version support:
 1. Add an entry in your `pubspec.yaml` for `uuid_type`
 ```yaml
 dependencies:
-  uuid_type: ^1.0.0
+  uuid_type: ^2.0.0
 ```
 2. Run `pub get` (`flutter packages get` for Flutter)
 3. Import
@@ -40,7 +40,24 @@ import 'package:uuid_type/uuid_type.dart';
 ```
 
 ### Usage
-[API](https://pub.dartlang.org/documentation/uuid_type/latest/)
+Generate UUIDs
+```dart
+import 'package:uuid_type/uuid_type.dart';
+
+void main() {
+  var u = TimeUuidGenerator().generate();
+  print(u.toString());
+
+  u = NameUuidGenerator(NameUuidGenerator.urlNamespace).generateFromString('https://dart.dev/');
+  print(u.toString());
+
+  u = RandomUuidGenerator().generate();
+  print(u.toString());
+}
+```
+
+See more [examples](example/main.dart) and 
+[Documentation](https://pub.dartlang.org/documentation/uuid_type/latest/)
 
 ## Release notes
 See [CHANGELOG](CHANGELOG.md)

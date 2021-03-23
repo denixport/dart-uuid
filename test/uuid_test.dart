@@ -97,7 +97,7 @@ void main() {
         expect(Comparable.compare(newer, older) > 0, isTrue);
 
         // same timestamp compared in lexicographical order
-        final ua = Uuid.parse('00000000-1234-4235-8000-000000000000');
+        final ua = Uuid.parse('00000000-1233-4235-8000-000000000000');
         final ub = Uuid.parse('00000000-1234-4234-8000-000000000000');
         expect(Comparable.compare(ua, ub) > 0, isFalse);
       });
