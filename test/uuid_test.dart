@@ -28,21 +28,21 @@ void main() {
     group('Parsing', () {
       test('Can be parsed from various formats', () {
         final expected = validStrings[0];
-        validStrings.forEach((String source) {
+        for (var source in validStrings) {
           expect((Uuid.parse(source)).toString(), expected);
-        });
+        }
       });
 
       test('Invalid string throws FormatException', () {
-        invalidStrings.forEach((String source) {
+        for (var source in invalidStrings) {
           expect(() => Uuid.parse(source), throwsFormatException);
-        });
+        }
       });
 
       test('Nil strings are parsed to Nil UUID', () {
-        nilStrings.forEach((String source) {
+        for (var source in nilStrings) {
           expect(identical(Uuid.parse(source), Uuid.nil), isTrue);
-        });
+        }
       });
     });
 

@@ -1,11 +1,11 @@
-// Copyright (c) 2018-2021, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2024, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 library uuid_type.generators;
 
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
-import 'dart:typed_data' show Uint8List, UnmodifiableUint8ListView;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:crypto/crypto.dart' show sha1;
 
@@ -127,7 +127,7 @@ class TimeUuidGenerator {
   int get clockSequence => _clockSeq;
 
   /// Returns Node ID for this generator
-  UnmodifiableUint8ListView get nodeId => UnmodifiableUint8ListView(_nodeId);
+  Uint8List get nodeId => _nodeId.asUnmodifiableView();
 
   /// Generates UUID for current time
   Uuid generate() {

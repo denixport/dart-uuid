@@ -10,19 +10,22 @@ and supports generation, parsing and formatting of UUIDs.
 Features:
 * [x] Creates UUID from string and byte-array, as well as GUID and URN strings
 * [x] Provides access to variant, version and byte data of UUID
-* [x] Generates RFC4122 time-based v1, random-based v4, and namespace & name-based v5 UUIDs
+* [x] Generates RFC4122 version 1, version 4, or version 5 UUIDs
 * [x] Implements `Comparable` for UUID comparison and lexicographical sorting
-* [x] Runs on Dart VM and in browser
+* [x] Runs in web, server, and flutter
 
-RFC 4122 Version support:
-- [x] v1, based on timestamp and MAC address (RFC 4122)
+RFC Version support:
+- [x] v1, based on timestamp and MAC address
 - [ ] v2, based on timestamp, MAC address and POSIX UID/GID (DCE 1.1) **Not planned**
-- [ ] v3, based on MD5 hashing (RFC 4122) **Not planned**
-- [x] v4, based on random numbers (RFC 4122)
-- [x] v5, based on SHA-1 hashing (RFC 4122)
+- [ ] v3, based on MD5 hashing **Not planned**
+- [x] v4, based on random numbers
+- [x] v5, based on SHA-1 hashing
+- [ ] v6, A re-ordering of UUID version 1 so it is sortable as an opaque sequence of bytes
+- [ ] v7, An entirely new time-based UUID bit layout sourced from the widely implemented and well known Unix Epoch timestamp source
+- [ ] v8, A free-form UUID format which has no explicit requirements except maintaining backward compatibility.
 
 ## Requirements
-- Dart SDK >- 2.12.0
+- Dart SDK >= 2.12.0
 - `crypto` package 
 
 ## Getting Started
@@ -31,7 +34,7 @@ RFC 4122 Version support:
 1. Add an entry in your `pubspec.yaml` for `uuid_type`
 ```yaml
 dependencies:
-  uuid_type: ^2.0.0
+  uuid_type: ^2.1.0
 ```
 2. Run `pub get` (`flutter packages get` for Flutter)
 3. Import
@@ -64,6 +67,5 @@ See [CHANGELOG](CHANGELOG.md)
 
 ## Features and Bugs
 Please file bugs and feature requests at the [issue tracker][tracker].
-
 
 [tracker]: https://github.com/denixport/dart-uuid/issues

@@ -1,4 +1,10 @@
 
+## 2.1.0
+Minimal Dart v.3.3 dependency
+
+### Changed
+- `TimeUuidGenerator.nodeId` is changed from `UnmodifiableUint8ListView` to read-only `Uint8List`
+
 ## 2.0.0
 Stable null safety release
 

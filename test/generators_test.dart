@@ -89,6 +89,10 @@ void main() {
         gi %= gens.length;
       }
     });
+
+    test('Node ID is not modifiable', () {
+      expect(() => TimeUuidGenerator().nodeId[0] = 0, throwsA(TypeMatcher<UnsupportedError>()));
+    });
   });
 
   group('Random-based generator (v4)', () {
