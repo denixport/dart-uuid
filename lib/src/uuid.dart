@@ -97,6 +97,10 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Returns byte array of this UUID
   Uint8List toBytes();
 
+  factory Uuid.fromJson(String json) => parse(json);
+
+  String toJson() => toString();
+
   /// Returns canonical string representation
   @override
   String toString();
