@@ -8,7 +8,7 @@ void main() {
   group('UUID', () {
     group('Constructors', () {
       test('Can be created from bytes', () {
-        var u = Uuid.fromBytes(dnsNsBytes);
+        final u = Uuid.fromBytes(dnsNsBytes);
 
         expect(u.variant, Variant.rfc4122);
         expect(u.version, 1);
@@ -103,19 +103,19 @@ void main() {
       });
 
       test('Node comparison works', () {
-        var ua = Uuid.parse('00000000-0000-1000-8000-100000000000');
-        var ub = Uuid.parse('00000000-0000-1000-8000-010000000000');
+        final ua = Uuid.parse('00000000-0000-1000-8000-100000000000');
+        final ub = Uuid.parse('00000000-0000-1000-8000-010000000000');
         expect(Comparable.compare(ua, ub) > 0, isTrue);
       });
 
       test('Same UUIDs have same hashCode', () {
-        var ua = Uuid.parse('00000000-0000-1000-8000-100000000000');
-        var ub = Uuid.parse('00000000-0000-1000-8000-100000000000');
+        final ua = Uuid.parse('00000000-0000-1000-8000-100000000000');
+        final ub = Uuid.parse('00000000-0000-1000-8000-100000000000');
         expect(ua.hashCode, ub.hashCode);
       });
 
       test('hashCode does not overflow', () {
-        var u = Uuid.parse('ffffffff-ffff-50ff-bfff-ffffffffffff');
+        final u = Uuid.parse('ffffffff-ffff-50ff-bfff-ffffffffffff');
         expect(u.hashCode, 1073786624);
       });
     });

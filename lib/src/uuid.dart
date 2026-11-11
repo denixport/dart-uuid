@@ -1,30 +1,28 @@
 // Copyright (c) 2018-2024, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
-library uuid_type;
-
 import 'dart:typed_data' show Uint8List;
 
-/// UUID variant according to RFC4122
+/// UUID variant according to RFC 9562.
 enum Variant {
   /// Reserved, NCS backward compatibility.
   ncs,
 
-  /// The variant specified in RFC 4122
+  /// The variant specified in RFC 9562.
   rfc4122,
 
   /// Reserved, Microsoft Corporation backward compatibility.
   microsoft,
 
   /// Reserved for future definition
-  future
+  future,
 }
 
 /// This object represents an UUID, 128 bit Universal Unique Identifier
-/// as defined in [RFC 4122](https://tools.ietf.org/html/rfc4122).
+/// as defined in [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html).
 abstract class Uuid implements Comparable<Uuid> {
   /// Nil UUID
-  /// (see [RFC 4122 4.1.7](https://tools.ietf.org/html/rfc4122#section-4.1.7))
+  /// (see [RFC 9562 section 5.9](https://www.rfc-editor.org/rfc/rfc9562.html#section-5.9))
   static Uuid get nil => Uuid.fromBytes(Uint8List(16));
 
   // Shared buffer for byte representation for all instances
@@ -40,11 +38,11 @@ abstract class Uuid implements Comparable<Uuid> {
   int get hashCode;
 
   /// Variant defined in
-  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.1)
+  /// [RFC 9562 section 4.1](https://www.rfc-editor.org/rfc/rfc9562.html#section-4.1)
   Variant get variant;
 
   /// Version defined in
-  /// [RFC 4122](https://tools.ietf.org/html/rfc4122#section-4.1.3)
+  /// [RFC 9562 section 4.2](https://www.rfc-editor.org/rfc/rfc9562.html#section-4.2)
   int get version;
 
   @override
@@ -74,8 +72,8 @@ abstract class Uuid implements Comparable<Uuid> {
 
     if (diff != 0) return diff;
 
-    var a = toBytes();
-    var b = other.toBytes();
+    final a = toBytes();
+    final b = other.toBytes();
 
     if (ver == 1) {
       for (var pos in const <int>[7, 4, 5, 0, 1, 2, 3]) {
@@ -110,7 +108,7 @@ abstract class Uuid implements Comparable<Uuid> {
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-      0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+      0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     ];
 
     c1 -= 0x30;
@@ -119,10 +117,10 @@ abstract class Uuid implements Comparable<Uuid> {
     c2 -= 0x30;
     if (c2 < 0 || c2 >= hexBytes.length) return -1;
 
-    var b1 = hexBytes[c1];
+    final b1 = hexBytes[c1];
     if (b1 == 0xff) return -2;
 
-    var b2 = hexBytes[c2];
+    final b2 = hexBytes[c2];
     if (b2 == 0xff) return -1;
 
     return (b1 << 4) | b2;
@@ -131,11 +129,11 @@ abstract class Uuid implements Comparable<Uuid> {
   // parses standard UUID string into _buffer
   static FormatException? _parseStd(String source) {
     const bytePositions = <int>[
-      0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34 //
+      0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34, //
     ];
     const dashPositions = <int>[8, 13, 18, 23];
 
-    var chars = source.codeUnits;
+    final chars = source.codeUnits;
     assert(chars.length == 36);
 
     // check '-' positions
@@ -147,7 +145,7 @@ abstract class Uuid implements Comparable<Uuid> {
 
     var i = 0;
     for (var pos in bytePositions) {
-      var b = _hexChars2Byte(chars[pos], chars[pos + 1]);
+      final b = _hexChars2Byte(chars[pos], chars[pos + 1]);
       if (b < 0) {
         return FormatException('Invalid hex char', source, pos + b + 2);
       }
@@ -187,10 +185,10 @@ abstract class Uuid implements Comparable<Uuid> {
 
     // parse 32-char hex
 
-    var chars = source.codeUnits;
+    final chars = source.codeUnits;
 
     for (var i = 0; i < 16; i++) {
-      var b = _hexChars2Byte(chars[2 * i], chars[2 * i + 1]);
+      final b = _hexChars2Byte(chars[2 * i], chars[2 * i + 1]);
       if (b < 0) {
         return FormatException('Invalid hex char', source, 2 * i + b + 2);
       }
@@ -211,7 +209,7 @@ abstract class Uuid implements Comparable<Uuid> {
   /// - Canonical GUID: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx}
   /// - Hex GUID: {xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
   static Uuid parse(String source) {
-    var e = _parse(source);
+    final e = _parse(source);
     if (e != null) throw e;
     return Uuid.fromBytes(_buffer);
   }
@@ -238,7 +236,7 @@ class _Uuid implements Uuid {
     0, 0, 0, 0, 0x2D,
     0, 0, 0, 0, 0x2D,
     0, 0, 0, 0, 0x2D,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ]); // time_low
 
   // UUID is stored as 4 x 32bit unsigned integers
@@ -253,22 +251,26 @@ class _Uuid implements Uuid {
       throw ArgumentError('Invalid offset');
     }
 
-    var x = (bytes[offset + 0] << 24) |
-    (bytes[offset + 1] << 16) |
-    (bytes[offset + 2] << 8) |
-    bytes[offset + 3];
-    var y = (bytes[offset + 4] << 24) |
-    (bytes[offset + 5] << 16) |
-    (bytes[offset + 6] << 8) |
-    bytes[offset + 7];
-    var z = (bytes[offset + 8] << 24) |
-    (bytes[offset + 9] << 16) |
-    (bytes[offset + 10] << 8) |
-    bytes[offset + 11];
-    var w = (bytes[offset + 12] << 24) |
-    (bytes[offset + 13] << 16) |
-    (bytes[offset + 14] << 8) |
-    bytes[offset + 15];
+    final x =
+        (bytes[offset + 0] << 24) |
+        (bytes[offset + 1] << 16) |
+        (bytes[offset + 2] << 8) |
+        bytes[offset + 3];
+    final y =
+        (bytes[offset + 4] << 24) |
+        (bytes[offset + 5] << 16) |
+        (bytes[offset + 6] << 8) |
+        bytes[offset + 7];
+    final z =
+        (bytes[offset + 8] << 24) |
+        (bytes[offset + 9] << 16) |
+        (bytes[offset + 10] << 8) |
+        bytes[offset + 11];
+    final w =
+        (bytes[offset + 12] << 24) |
+        (bytes[offset + 13] << 16) |
+        (bytes[offset + 14] << 8) |
+        bytes[offset + 15];
 
     if ((y | z | x | w) == 0) return nil;
 
@@ -393,7 +395,7 @@ class _Uuid implements Uuid {
   String toString() {
     const hexcu = <int>[
       0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, // 0-9
-      0x61, 0x62, 0x63, 0x64, 0x65, 0x66 // a-f
+      0x61, 0x62, 0x63, 0x64, 0x65, 0x66, // a-f
     ];
 
     _strBuffer[0] = hexcu[((x >> 24) & 0xff) >> 4];

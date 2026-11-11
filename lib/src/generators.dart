@@ -1,8 +1,6 @@
 // Copyright (c) 2018-2024, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
-library uuid_type.generators;
-
 import 'dart:convert' show utf8;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Uint8List;
@@ -87,11 +85,14 @@ class TimeUuidGenerator {
   /// It takes clock sequence and node from provided [state].
   /// If timestamp of [state] is ahead of current time, clock sequence is
   /// increased.
-  /// see (RFC 4122 4.2.1)[https://tools.ietf.org/html/rfc4122#section-4.2.1]
+  /// See [RFC 9562 section 6.3](https://www.rfc-editor.org/rfc/rfc9562.html#section-6.3).
   factory TimeUuidGenerator.fromLastUuid(Uuid state) {
     if (state.version != 1) {
       throw ArgumentError.value(
-          state.version, 'version', 'UUID is not time-based');
+        state.version,
+        'version',
+        'UUID is not time-based',
+      );
     }
 
     final sb = state.toBytes();
@@ -142,18 +143,22 @@ class TimeUuidGenerator {
       // account for low res clocks
       // same interval, bump extra intervals counter
       _extraIntervals++;
-
-      if (_extraIntervals > _intervalsPerMs) {
-        throw StateError('Too many UUIDs requested');
-      }
     } else {
-      _extraIntervals = 0;
+      // Keep the generated timestamp ahead of the previous one. The clock may
+      // advance by fewer intervals than were added while it was unchanged.
+      _extraIntervals = _extraIntervals >= diff
+          ? _extraIntervals - diff + 1
+          : 0;
 
       if (diff < 0) {
         // clock regression, bump clock sequence
         _clockSeq++;
         _clockSeq &= 0x3FFF;
       }
+    }
+
+    if (_extraIntervals > _intervalsPerMs) {
+      throw StateError('Too many UUIDs requested');
     }
 
     final elapsedMs = elapsedIntervals ~/ _intervalsPerMs;
@@ -164,22 +169,9 @@ class TimeUuidGenerator {
     // print('  msIntervals     : $msIntervals');
     // print('  _extraIntervals : $_extraIntervals');
 
-    int ts, timeLo, timeMidHi;
-
-    if ((1 << 32) != 0) {
-      ts = (_zeroMs + elapsedMs) * _intervalsPerMs + msIntervals;
-      timeLo = ts & 0xFFFFFFFF;
-      timeMidHi = ts >> 32;
-    } else {
-      ts = _zeroMs + elapsedMs;
-
-      timeLo = ((ts & 0xfffffff) * _intervalsPerMs + msIntervals) % 0x100000000;
-      timeMidHi = (ts ~/ 0x100000000 * _intervalsPerMs) & 0xfffffff;
-
-      // print('  ts          : $ts');
-      // print('  timeLo      : $timeLo');
-      // print('  timeMidHi   : $timeMidHi');
-    }
+    final ts = (_zeroMs + elapsedMs) * _intervalsPerMs + msIntervals;
+    final timeLo = ts & 0xFFFFFFFF;
+    final timeMidHi = ts >> 32;
 
     _buffer[0] = timeLo >> 24;
     _buffer[1] = timeLo >> 16;
@@ -201,24 +193,28 @@ class TimeUuidGenerator {
 /// SHA-1 hashing is used, MD5 is deprecated
 class NameUuidGenerator {
   /// Name space IDs for some potentially interesting namespaces see
-  /// [RFC 4122 Appendix C](https://tools.ietf.org/html/rfc4122#appendix-C)
+  /// [RFC 9562 section 6.6](https://www.rfc-editor.org/rfc/rfc9562.html#section-6.6)
 
   /// Name space for DNS
   /// '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
-  static final dnsNamespace =
-      Uuid.parse('6ba7b810-9dad-11d1-80b4-00c04fd430c8');
+  static final dnsNamespace = Uuid.parse(
+    '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+  );
 
   /// Name space for URL
-  static final urlNamespace =
-      Uuid.parse('6ba7b811-9dad-11d1-80b4-00c04fd430c8');
+  static final urlNamespace = Uuid.parse(
+    '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+  );
 
   /// Name space for ISO OID
-  static final oidNamespace =
-      Uuid.parse('6ba7b812-9dad-11d1-80b4-00c04fd430c8');
+  static final oidNamespace = Uuid.parse(
+    '6ba7b812-9dad-11d1-80b4-00c04fd430c8',
+  );
 
   /// Name space for X.500 DN
-  static final x500namespace =
-      Uuid.parse('6ba7b814-9dad-11d1-80b4-00c04fd430c8');
+  static final x500namespace = Uuid.parse(
+    '6ba7b814-9dad-11d1-80b4-00c04fd430c8',
+  );
 
   // shared buffer
   static final Uint8List _buffer = Uint8List(16);
@@ -269,7 +265,7 @@ class RandomUuidGenerator {
   Uuid generate() {
     int u32;
     for (var i = 0; i < 4; i++) {
-      u32 = rng.nextInt(0xffffffff);
+      u32 = rng.nextInt(1 << 32);
 
       _buffer[i * 4] = u32 >> 24;
       _buffer[i * 4 + 1] = u32 >> 16;

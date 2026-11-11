@@ -4,21 +4,19 @@ import 'package:uuid_type/uuid_type.dart';
 
 Uint8List l2b(List<int> list) => Uint8List.fromList(list);
 
-Uuid testNil = Uuid.fromBytes(nilBytes);
+final testNil = Uuid.fromBytes(nilBytes);
 
 const dnsNsString = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 const urlNsString = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 const oidNsString = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
 const x500NsString = '6ba7b814-9dad-11d1-80b4-00c04fd430c8';
 
-var x = <int>[1, 2, 3] as Uint8List;
-
 final nilBytes = l2b(<int>[
   0x00, 0x00, 0x00, 0x00, //
   0x00, 0x00,
   0x00, 0x00,
   0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ]);
 
 final dnsNsBytes = l2b(<int>[
@@ -26,7 +24,7 @@ final dnsNsBytes = l2b(<int>[
   0x9D, 0xAD,
   0x11, 0xD1,
   0x80, 0xB4,
-  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
+  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8,
 ]);
 
 final urlNsBytes = l2b(<int>[
@@ -34,7 +32,7 @@ final urlNsBytes = l2b(<int>[
   0x9D, 0xAD,
   0x11, 0xD1,
   0x80, 0xB4,
-  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8
+  0x00, 0xC0, 0x4F, 0xD4, 0x30, 0xC8,
 ]);
 
 const maxByteList = <int>[
@@ -42,7 +40,7 @@ const maxByteList = <int>[
   0xFF, 0xFF,
   0xFF, 0xFF,
   0xFF, 0xFF,
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 ];
 
 const validStrings = <String>[
@@ -110,5 +108,5 @@ const testNamesDns = <String>[
   'www.example.com', '2ed6657d-e927-568b-95e1-2665a8aea6a2',
   'python.org', '886313e1-3b8a-5372-9b90-0c9aee199e5d',
   'Bücher.example', '3b2e4e71-46e9-5d45-bb2b-0384d899603a',
-  'дарт.рф', 'ee15950c-7674-5695-a2dc-11d0ed0a7fdd'
+  'дарт.рф', 'ee15950c-7674-5695-a2dc-11d0ed0a7fdd',
 ];
