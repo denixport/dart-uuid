@@ -1,8 +1,6 @@
 // Copyright (c) 2018-2024, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
-library uuid_type.util;
-
 import 'generators.dart';
 import 'uuid.dart';
 
@@ -33,9 +31,9 @@ class UuidUtil {
 
   /// Generates name-based UUID string
   String v5(String namespace, String name) {
-    return NameUuidGenerator(Uuid.parse(namespace))
-        .generateFromString(name)
-        .toString();
+    return NameUuidGenerator(
+      Uuid.parse(namespace),
+    ).generateFromString(name).toString();
   }
 
   /// Compares to UUID strings
