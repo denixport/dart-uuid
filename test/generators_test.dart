@@ -69,6 +69,13 @@ void main() {
       expect(g.clockSequence, 1);
     });
 
+    test('Restores the clock sequence when only high timestamp bits are ahead', () {
+      final state = Uuid.parse('00000000-0000-1fff-8000-000000000000');
+      final generator = TimeUuidGenerator.fromLastUuid(state);
+
+      expect(generator.clockSequence, 1);
+    });
+
     test('Multiple generators produce unique UUIDs', () {
       final umap = <Uuid, bool>{};
       final gens = <TimeUuidGenerator>[

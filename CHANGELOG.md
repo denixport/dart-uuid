@@ -1,10 +1,19 @@
 
+## 2.2.1
+
+### Fixed
+- Corrected time-based generator state restoration for timestamps with high bits set
+- Corrected the README dependency example
+
 ## 2.2.0
 
 ### Added
 - UUIDv6 and UUIDv7 generators, including monotonic generation and state restoration
 - `UuidV1Generator` alias for `TimeUuidGenerator`
 - `UuidUtil.v6()` and `UuidUtil.v7()` convenience methods
+
+### Changed
+- Minimum Dart SDK version is 3.8
 
 ## 2.1.0
 Minimal Dart v.3.3 dependency

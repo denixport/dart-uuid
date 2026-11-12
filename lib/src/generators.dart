@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2026, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 import 'dart:convert' show utf8;
@@ -52,7 +52,7 @@ class TimeUuidGenerator {
   static Uint8List _getValidNodeId(Uint8List? nodeId) {
     if (nodeId == null) {
       nodeId = Uint8List(6);
-      var u = _rng.nextInt(0xffffffff);
+      var u = _rng.nextInt(1 << 32);
       nodeId[0] = (u >> 24) | 0x01; // multicast bit as recommended by RFC
       nodeId[1] = u >> 16;
       nodeId[2] = u >> 8;
@@ -97,16 +97,8 @@ class TimeUuidGenerator {
     final g = TimeUuidGenerator(sb.sublist(10, 16));
     final gb = g.generate().toBytes();
 
-    // timestamp of the state UUID
-    final stl = (sb[0] << 24) | (sb[1] << 16) | (sb[2] << 8) | sb[3];
-    final stmh = (sb[4] << 8) | sb[5] | ((sb[6] << 24) & 0x0F) | (sb[7] << 16);
-
-    // timestamp of newly generated UUID
-    final gtl = (gb[0] << 24) | (gb[1] << 16) | (gb[2] << 8) | gb[3];
-    final gtmh = (gb[4] << 8) | gb[5] | ((gb[6] << 24) & 0x0F) | (gb[7] << 16);
-
     // if state is ahead of this generator, bump up clock sequence
-    if (((gtmh & 0xFFFF) - (stmh & 0xFFFF)) < 0 || ((gtmh >> 16) - (stmh >> 16)) < 0 || (gtl - stl) < 0) {
+    if (_timestamp(gb) < _timestamp(sb)) {
       clockSeq++;
       clockSeq &= 0x3FFF;
     }
@@ -114,6 +106,17 @@ class TimeUuidGenerator {
     g._clockSeq = clockSeq;
 
     return g;
+  }
+
+  static int _timestamp(Uint8List bytes) {
+    return ((bytes[6] & 0x0f) << 56) |
+        (bytes[7] << 48) |
+        (bytes[4] << 40) |
+        (bytes[5] << 32) |
+        (bytes[0] << 24) |
+        (bytes[1] << 16) |
+        (bytes[2] << 8) |
+        bytes[3];
   }
 
   /// Returns current clock sequence for this generator
