@@ -4,6 +4,11 @@
 ### Fixed
 - Corrected time-based generator state restoration for timestamps with high bits set
 - Corrected the README dependency example
+- Time-based and time-ordered generators (v1, v6, v7) now produce correct values when compiled to JavaScript,
+  without slowing down UUIDv7 generation on native platforms
+
+### Added
+- `benchmark/generators_benchmark.dart` micro-benchmark for the generators
 
 ## 2.2.0
 

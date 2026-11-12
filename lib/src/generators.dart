@@ -321,10 +321,23 @@ class UuidV6Generator {
 
 /// Generator for time-ordered UUIDv7 values.
 class UuidV7Generator {
+  // The 74-bit monotonic random counter is held in three limbs so every
+  // intermediate value stays below 2^32. That keeps `>>`, `&` and `|` exact on
+  // the JS platform (where integers are doubles and bit ops are 32-bit) while
+  // compiling to plain register ops on the VM.
+  //   _randA: 12 bits -> rand_a        (byte 6 low nibble, byte 7)
+  //   _randB: 30 bits -> rand_b high   (byte 8 low 6 bits, bytes 9-11)
+  //   _randC: 32 bits -> rand_b low    (bytes 12-15)
+  static const _limitA = 0x1000;
+  static const _limitB = 0x40000000;
+  static const _limitC = 0x100000000;
+
   final Random _random;
   final int Function() _millisecondsSinceEpoch;
   int _lastMilliseconds = -1;
-  Uint8List _randomValue = Uint8List(10);
+  int _randA = 0;
+  int _randB = 0;
+  int _randC = 0;
 
   UuidV7Generator({Random? random, int Function()? millisecondsSinceEpoch})
     : _random = random ?? Random.secure(),
@@ -335,68 +348,71 @@ class UuidV7Generator {
     if (state.version != 7) {
       throw ArgumentError.value(state.version, 'version', 'UUID must be version 7');
     }
-    final bytes = state.toBytes();
-    var milliseconds = 0;
-    for (var i = 0; i < 6; i++) {
-      milliseconds = milliseconds * 256 + bytes[i];
-    }
-    final randomValue = Uint8List(10);
-    randomValue[0] = bytes[6] & 0x0f;
-    randomValue[1] = bytes[7];
-    randomValue[2] = bytes[8] & 0x3f;
-    for (var i = 3; i < 10; i++) {
-      randomValue[i] = bytes[i + 6];
-    }
+    final b = state.toBytes();
+    final msHi = (b[0] << 8) | b[1];
+    final msLo = (b[2] << 24) | (b[3] << 16) | (b[4] << 8) | b[5];
     return UuidV7Generator._(
       random ?? Random.secure(),
       millisecondsSinceEpoch ?? (() => DateTime.now().millisecondsSinceEpoch),
-      milliseconds,
-      randomValue,
+      msHi * _limitC + msLo,
+      ((b[6] & 0x0f) << 8) | b[7],
+      ((b[8] & 0x3f) << 24) | (b[9] << 16) | (b[10] << 8) | b[11],
+      (b[12] << 24) | (b[13] << 16) | (b[14] << 8) | b[15],
     );
   }
 
-  UuidV7Generator._(this._random, this._millisecondsSinceEpoch, this._lastMilliseconds, this._randomValue);
+  UuidV7Generator._(
+    this._random,
+    this._millisecondsSinceEpoch,
+    this._lastMilliseconds,
+    this._randA,
+    this._randB,
+    this._randC,
+  );
 
   Uuid generate() {
     var milliseconds = _millisecondsSinceEpoch();
     if (milliseconds < _lastMilliseconds) milliseconds = _lastMilliseconds;
     if (milliseconds > _lastMilliseconds) {
       _lastMilliseconds = milliseconds;
-      _randomValue = Uint8List(10);
-      _randomValue[0] = _random.nextInt(16);
-      _randomValue[1] = _random.nextInt(256);
-      _randomValue[2] = _random.nextInt(64);
-      for (var i = 3; i < 10; i++) {
-        _randomValue[i] = _random.nextInt(256);
-      }
-    } else {
-      var carry = true;
-      for (var i = 9; i >= 0 && carry; i--) {
-        final limit = i == 0
-            ? 0x0f
-            : i == 2
-            ? 0x3f
-            : 0xff;
-        if (_randomValue[i] == limit) {
-          _randomValue[i] = 0;
-        } else {
-          _randomValue[i]++;
-          carry = false;
+      _randA = _random.nextInt(_limitA);
+      _randB = _random.nextInt(_limitB);
+      _randC = _random.nextInt(_limitC);
+    } else if (++_randC == _limitC) {
+      _randC = 0;
+      if (++_randB == _limitB) {
+        _randB = 0;
+        if (++_randA == _limitA) {
+          _randA = _limitA - 1;
+          _randB = _limitB - 1;
+          _randC = _limitC - 1;
+          throw StateError('Too many UUIDs requested in one millisecond');
         }
       }
-      if (carry) throw StateError('Too many UUIDs requested in one millisecond');
     }
+
+    // 48-bit timestamp split into 16 + 32 bits; `~/` and `%` by 2^32 are exact
+    // on both platforms, and each half then fits in 32-bit bit operations.
+    final msHi = milliseconds ~/ _limitC;
+    final msLo = milliseconds % _limitC;
+
     final bytes = Uint8List(16);
-    for (var i = 5; i >= 0; i--) {
-      bytes[i] = milliseconds % 256;
-      milliseconds ~/= 256;
-    }
-    bytes[6] = _randomValue[0] | 0x70;
-    bytes[7] = _randomValue[1];
-    bytes[8] = _randomValue[2] | 0x80;
-    for (var i = 3; i < 10; i++) {
-      bytes[i + 6] = _randomValue[i];
-    }
+    bytes[0] = msHi >> 8;
+    bytes[1] = msHi;
+    bytes[2] = msLo >> 24;
+    bytes[3] = msLo >> 16;
+    bytes[4] = msLo >> 8;
+    bytes[5] = msLo;
+    bytes[6] = (_randA >> 8) | 0x70;
+    bytes[7] = _randA;
+    bytes[8] = (_randB >> 24) | 0x80;
+    bytes[9] = _randB >> 16;
+    bytes[10] = _randB >> 8;
+    bytes[11] = _randB;
+    bytes[12] = _randC >> 24;
+    bytes[13] = _randC >> 16;
+    bytes[14] = _randC >> 8;
+    bytes[15] = _randC;
     return Uuid.fromBytes(bytes);
   }
 }

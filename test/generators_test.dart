@@ -200,5 +200,36 @@ void main() {
       ).generate();
       expect(next, greaterThan(state));
     });
+
+    test('Carries across random counter limbs', () {
+      const ms = 1645557742000;
+      final state = Uuid.parse('017f22e2-79b0-7abc-bfff-ffffffffffff');
+      final next = UuidV7Generator.fromLastUuid(state, millisecondsSinceEpoch: () => ms).generate();
+      expect(next.toString(), '017f22e2-79b0-7abd-8000-000000000000');
+      final mid = Uuid.parse('017f22e2-79b0-7abc-8123-4567ffffffff');
+      expect(
+        UuidV7Generator.fromLastUuid(mid, millisecondsSinceEpoch: () => ms).generate().toString(),
+        '017f22e2-79b0-7abc-8123-456800000000',
+      );
+    });
+
+    test('Throws when the counter is exhausted and keeps throwing', () {
+      const ms = 1645557742000;
+      final state = Uuid.parse('017f22e2-79b0-7fff-bfff-ffffffffffff');
+      final g = UuidV7Generator.fromLastUuid(state, millisecondsSinceEpoch: () => ms);
+      expect(g.generate, throwsStateError);
+      expect(g.generate, throwsStateError);
+    });
+
+    test('Round-trips large timestamps', () {
+      const ms = 0xFFFFFFFFFFFF; // max 48-bit
+      final g = UuidV7Generator(random: RandomMock(<int>[0, 0, 0]), millisecondsSinceEpoch: () => ms);
+      expect(g.generate().toString().substring(0, 13), 'ffffffff-ffff');
+      final s = Uuid.parse('ffffffff-ffff-7000-8000-000000000000');
+      expect(
+        UuidV7Generator.fromLastUuid(s, millisecondsSinceEpoch: () => ms).generate().toString(),
+        'ffffffff-ffff-7000-8000-000000000001',
+      );
+    });
   });
 }
