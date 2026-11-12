@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2021, Denis Portnov. All rights reserved.
+// Copyright (c) 2018-2026, Denis Portnov. All rights reserved.
 // Released under MIT License that can be found in the LICENSE file.
 
 // This library provides UUID type for Dart. It allows you to read UUID from

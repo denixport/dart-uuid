@@ -40,7 +40,7 @@ and supports generation, parsing and formatting of UUIDs.
 
 ```yaml
 dependencies:
-  uuid_type: ^2.1.0
+  uuid_type: ^2.2.0
 ```
 
 2. Run `pub get` (`flutter packages get` for Flutter)
