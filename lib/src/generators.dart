@@ -52,7 +52,7 @@ class TimeUuidGenerator {
   static Uint8List _getValidNodeId(Uint8List? nodeId) {
     if (nodeId == null) {
       nodeId = Uint8List(6);
-      var u = _rng.nextInt(1 << 32);
+      var u = _rng.nextInt(0x100000000);
       nodeId[0] = (u >> 24) | 0x01; // multicast bit as recommended by RFC
       nodeId[1] = u >> 16;
       nodeId[2] = u >> 8;
@@ -98,7 +98,7 @@ class TimeUuidGenerator {
     final gb = g.generate().toBytes();
 
     // if state is ahead of this generator, bump up clock sequence
-    if (_timestamp(gb) < _timestamp(sb)) {
+    if (_compareTimestamp(gb, sb) < 0) {
       clockSeq++;
       clockSeq &= 0x3FFF;
     }
@@ -108,15 +108,13 @@ class TimeUuidGenerator {
     return g;
   }
 
-  static int _timestamp(Uint8List bytes) {
-    return ((bytes[6] & 0x0f) << 56) |
-        (bytes[7] << 48) |
-        (bytes[4] << 40) |
-        (bytes[5] << 32) |
-        (bytes[0] << 24) |
-        (bytes[1] << 16) |
-        (bytes[2] << 8) |
-        bytes[3];
+  static int _compareTimestamp(Uint8List left, Uint8List right) {
+    for (final index in <int>[6, 7, 4, 5, 0, 1, 2, 3]) {
+      final l = index == 6 ? left[index] & 0x0f : left[index];
+      final r = index == 6 ? right[index] & 0x0f : right[index];
+      if (l != r) return l - r;
+    }
+    return 0;
   }
 
   /// Returns current clock sequence for this generator
@@ -161,9 +159,12 @@ class TimeUuidGenerator {
     // print('  msIntervals     : $msIntervals');
     // print('  _extraIntervals : $_extraIntervals');
 
-    final ts = (_zeroMs + elapsedMs) * _intervalsPerMs + msIntervals;
-    final timeLo = ts & 0xFFFFFFFF;
-    final timeMidHi = ts >> 32;
+    final milliseconds = _zeroMs + elapsedMs;
+    final quotient = milliseconds ~/ 429496;
+    final remainder = milliseconds % 429496;
+    final remainderIntervals = remainder * _intervalsPerMs + msIntervals - quotient * 7296;
+    final timeLo = remainderIntervals % 0x100000000;
+    final timeMidHi = quotient + remainderIntervals ~/ 0x100000000;
 
     _buffer[0] = timeLo >> 24;
     _buffer[1] = timeLo >> 16;
@@ -252,7 +253,7 @@ class RandomUuidGenerator {
   Uuid generate() {
     int u32;
     for (var i = 0; i < 4; i++) {
-      u32 = rng.nextInt(1 << 32);
+      u32 = rng.nextInt(0x100000000);
 
       _buffer[i * 4] = u32 >> 24;
       _buffer[i * 4 + 1] = u32 >> 16;
@@ -279,24 +280,15 @@ class UuidV6Generator {
       throw ArgumentError.value(state.version, 'version', 'UUID must be version 6');
     }
     final v6 = state.toBytes();
-    final timestamp =
-        (v6[0] << 52) |
-        (v6[1] << 44) |
-        (v6[2] << 36) |
-        (v6[3] << 28) |
-        (v6[4] << 20) |
-        (v6[5] << 12) |
-        ((v6[6] & 0x0f) << 8) |
-        v6[7];
     final v1 = Uint8List(16);
-    v1[0] = timestamp >> 24;
-    v1[1] = timestamp >> 16;
-    v1[2] = timestamp >> 8;
-    v1[3] = timestamp;
-    v1[4] = timestamp >> 40;
-    v1[5] = timestamp >> 32;
-    v1[6] = ((timestamp >> 56) & 0x0f) | 0x10;
-    v1[7] = timestamp >> 48;
+    v1[6] = (v6[0] >> 4) | 0x10;
+    v1[7] = ((v6[0] & 0x0f) << 4) | (v6[1] >> 4);
+    v1[4] = ((v6[1] & 0x0f) << 4) | (v6[2] >> 4);
+    v1[5] = ((v6[2] & 0x0f) << 4) | (v6[3] >> 4);
+    v1[0] = ((v6[3] & 0x0f) << 4) | (v6[4] >> 4);
+    v1[1] = ((v6[4] & 0x0f) << 4) | (v6[5] >> 4);
+    v1[2] = ((v6[5] & 0x0f) << 4) | (v6[6] & 0x0f);
+    v1[3] = v6[7];
     for (var i = 8; i < 16; i++) {
       v1[i] = v6[i];
     }
@@ -311,21 +303,15 @@ class UuidV6Generator {
 
   Uuid generate() {
     final v1 = _v1Generator.generate().toBytes();
-    final timestamp =
-        ((v1[6] & 0x0f) << 56) |
-        (v1[7] << 48) |
-        (v1[4] << 40) |
-        (v1[5] << 32) |
-        (v1[0] << 24) |
-        (v1[1] << 16) |
-        (v1[2] << 8) |
-        v1[3];
     final bytes = Uint8List(16);
-    for (var i = 0; i < 6; i++) {
-      bytes[i] = timestamp >> (52 - i * 8);
-    }
-    bytes[6] = ((timestamp >> 8) & 0x0f) | 0x60;
-    bytes[7] = timestamp;
+    bytes[0] = ((v1[6] & 0x0f) << 4) | (v1[7] >> 4);
+    bytes[1] = ((v1[7] & 0x0f) << 4) | (v1[4] >> 4);
+    bytes[2] = ((v1[4] & 0x0f) << 4) | (v1[5] >> 4);
+    bytes[3] = ((v1[5] & 0x0f) << 4) | (v1[0] >> 4);
+    bytes[4] = ((v1[0] & 0x0f) << 4) | (v1[1] >> 4);
+    bytes[5] = ((v1[1] & 0x0f) << 4) | (v1[2] >> 4);
+    bytes[6] = (v1[2] & 0x0f) | 0x60;
+    bytes[7] = v1[3];
     for (var i = 8; i < 16; i++) {
       bytes[i] = v1[i];
     }
@@ -335,11 +321,10 @@ class UuidV6Generator {
 
 /// Generator for time-ordered UUIDv7 values.
 class UuidV7Generator {
-  static const _maxRandom = (1 << 74) - 1;
   final Random _random;
   final int Function() _millisecondsSinceEpoch;
   int _lastMilliseconds = -1;
-  int _randomValue = 0;
+  Uint8List _randomValue = Uint8List(10);
 
   UuidV7Generator({Random? random, int Function()? millisecondsSinceEpoch})
     : _random = random ?? Random.secure(),
@@ -351,19 +336,17 @@ class UuidV7Generator {
       throw ArgumentError.value(state.version, 'version', 'UUID must be version 7');
     }
     final bytes = state.toBytes();
-    final milliseconds =
-        (bytes[0] << 40) | (bytes[1] << 32) | (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
-    final randomValue =
-        ((bytes[6] & 0x0f) << 70) |
-        (bytes[7] << 62) |
-        ((bytes[8] & 0x3f) << 56) |
-        (bytes[9] << 48) |
-        (bytes[10] << 40) |
-        (bytes[11] << 32) |
-        (bytes[12] << 24) |
-        (bytes[13] << 16) |
-        (bytes[14] << 8) |
-        bytes[15];
+    var milliseconds = 0;
+    for (var i = 0; i < 6; i++) {
+      milliseconds = milliseconds * 256 + bytes[i];
+    }
+    final randomValue = Uint8List(10);
+    randomValue[0] = bytes[6] & 0x0f;
+    randomValue[1] = bytes[7];
+    randomValue[2] = bytes[8] & 0x3f;
+    for (var i = 3; i < 10; i++) {
+      randomValue[i] = bytes[i + 6];
+    }
     return UuidV7Generator._(
       random ?? Random.secure(),
       millisecondsSinceEpoch ?? (() => DateTime.now().millisecondsSinceEpoch),
@@ -379,21 +362,40 @@ class UuidV7Generator {
     if (milliseconds < _lastMilliseconds) milliseconds = _lastMilliseconds;
     if (milliseconds > _lastMilliseconds) {
       _lastMilliseconds = milliseconds;
-      _randomValue = (_random.nextInt(1 << 32) << 42) | (_random.nextInt(1 << 32) << 10) | _random.nextInt(1 << 10);
-    } else if (_randomValue == _maxRandom) {
-      throw StateError('Too many UUIDs requested in one millisecond');
+      _randomValue = Uint8List(10);
+      _randomValue[0] = _random.nextInt(16);
+      _randomValue[1] = _random.nextInt(256);
+      _randomValue[2] = _random.nextInt(64);
+      for (var i = 3; i < 10; i++) {
+        _randomValue[i] = _random.nextInt(256);
+      }
     } else {
-      _randomValue++;
+      var carry = true;
+      for (var i = 9; i >= 0 && carry; i--) {
+        final limit = i == 0
+            ? 0x0f
+            : i == 2
+            ? 0x3f
+            : 0xff;
+        if (_randomValue[i] == limit) {
+          _randomValue[i] = 0;
+        } else {
+          _randomValue[i]++;
+          carry = false;
+        }
+      }
+      if (carry) throw StateError('Too many UUIDs requested in one millisecond');
     }
     final bytes = Uint8List(16);
-    for (var i = 0; i < 6; i++) {
-      bytes[i] = milliseconds >> (40 - i * 8);
+    for (var i = 5; i >= 0; i--) {
+      bytes[i] = milliseconds % 256;
+      milliseconds ~/= 256;
     }
-    bytes[6] = ((_randomValue >> 70) & 0x0f) | 0x70;
-    bytes[7] = _randomValue >> 62;
-    bytes[8] = ((_randomValue >> 56) & 0x3f) | 0x80;
-    for (var i = 9; i < 16; i++) {
-      bytes[i] = _randomValue >> (8 * (15 - i));
+    bytes[6] = _randomValue[0] | 0x70;
+    bytes[7] = _randomValue[1];
+    bytes[8] = _randomValue[2] | 0x80;
+    for (var i = 3; i < 10; i++) {
+      bytes[i + 6] = _randomValue[i];
     }
     return Uuid.fromBytes(bytes);
   }
