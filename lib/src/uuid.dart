@@ -34,6 +34,8 @@ abstract class Uuid implements Comparable<Uuid> {
   /// Would return [Uuid.nil] when zero byte array is provided
   factory Uuid.fromBytes(Uint8List bytes, [int offset]) = _Uuid.fromBytes;
 
+  factory Uuid.fromJson(String json) => parse(json);
+
   @override
   int get hashCode;
 
@@ -94,6 +96,8 @@ abstract class Uuid implements Comparable<Uuid> {
 
   /// Returns byte array of this UUID
   Uint8List toBytes();
+
+  String toJson() => toString();
 
   /// Returns canonical string representation
   @override
@@ -370,6 +374,9 @@ class _Uuid implements Uuid {
 
     return _buffer.sublist(0);
   }
+
+  @override
+  String toJson() => toString();
 
   @override
   String toString() {
