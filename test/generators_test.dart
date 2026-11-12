@@ -125,7 +125,7 @@ void main() {
 
       final uuid = RandomUuidGenerator(rnd).generate();
 
-      expect(rnd.max, 1 << 32);
+      expect(rnd.max, 0x100000000);
       expect(uuid, Uuid.parse('ffffffff-ffff-4fff-bfff-ffffffffffff'));
     });
   });
