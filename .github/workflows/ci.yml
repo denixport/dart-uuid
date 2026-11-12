@@ -30,3 +30,15 @@ jobs:
       - name: Validate package
         if: matrix.sdk == 'stable'
         run: dart pub publish --dry-run
+
+  test_browser:
+    name: Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: google-chrome --version
+      - run: dart test --platform chrome
