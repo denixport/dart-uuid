@@ -12,7 +12,7 @@ and supports generation, parsing and formatting of UUIDs.
 
 * [x] Creates UUIDs from strings and byte arrays, including GUID and URN strings
 * [x] Provides access to UUID variant, version, and byte data
-* [x] Generates RFC 9562 versions 1, 4, and 5 UUIDs
+* [x] Generates RFC 9562 versions 1, 4, 5, 6, and 7 UUIDs
 * [x] Implements `Comparable` for UUID comparison and lexicographical sorting
 * [x] Runs on the web, server, and Flutter
 
@@ -23,8 +23,8 @@ and supports generation, parsing and formatting of UUIDs.
 - [ ] v3, based on MD5 hashing **Not planned**
 - [x] v4, based on random numbers
 - [x] v5, based on SHA-1 hashing
-- [ ] v6, A re-ordering of UUID version 1 so it is sortable as an opaque sequence of bytes
-- [ ] v7, An entirely new time-based UUID bit layout sourced from the widely implemented and well known Unix Epoch timestamp source
+- [x] v6, a time-ordered reordering of UUID version 1
+- [x] v7, a Unix Epoch time-based UUID
 - [ ] v8, A free-form UUID format which has no explicit requirements except maintaining backward compatibility.
 
 ## Requirements

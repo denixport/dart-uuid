@@ -93,10 +93,7 @@ void main() {
     });
 
     test('Node ID is not modifiable', () {
-      expect(
-        () => TimeUuidGenerator().nodeId[0] = 0,
-        throwsA(TypeMatcher<UnsupportedError>()),
-      );
+      expect(() => TimeUuidGenerator().nodeId[0] = 0, throwsA(TypeMatcher<UnsupportedError>()));
     });
   });
 
@@ -109,12 +106,7 @@ void main() {
     });
 
     test('Uses uint32 values correctly', () {
-      final rnd = RandomMock(<int>[
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-      ]);
+      final rnd = RandomMock(<int>[0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff]);
 
       // final expected = Uuid.fromBytes(l2b(const <int>[
       //   0xFF, 0xFF, 0xFF, 0xFF, //
@@ -133,9 +125,7 @@ void main() {
 
   group('Name-based generator (v5)', () {
     test('Generates UUID with correct variant and version', () {
-      final uuid = NameUuidGenerator(
-        NameUuidGenerator.dnsNamespace,
-      ).generateFromString('');
+      final uuid = NameUuidGenerator(NameUuidGenerator.dnsNamespace).generateFromString('');
 
       expect(uuid.variant, Variant.rfc4122);
       expect(uuid.version, 5);
@@ -144,10 +134,7 @@ void main() {
     test('Generates correct UUIDs', () {
       final gen = NameUuidGenerator(NameUuidGenerator.dnsNamespace);
       for (var i = 0; i < testNamesDns.length; i += 2) {
-        expect(
-          gen.generateFromString(testNamesDns[i]).toString(),
-          testNamesDns[i + 1],
-        );
+        expect(gen.generateFromString(testNamesDns[i]).toString(), testNamesDns[i + 1]);
       }
     });
 
@@ -159,6 +146,52 @@ void main() {
       expect(u1 == u2, isTrue);
       expect(u1.toBytes(), u2.toBytes());
       expect(u1.toString(), u2.toString());
+    });
+  });
+
+  group('Time-ordered generator (v6)', () {
+    test('Generates sortable UUIDs with the correct variant and version', () {
+      final generator = UuidV6Generator();
+      final first = generator.generate();
+      final second = generator.generate();
+      expect(first.variant, Variant.rfc4122);
+      expect(first.version, 6);
+      expect(second, greaterThan(first));
+    });
+
+    test('Can be restored from its last UUID', () {
+      final state = UuidV6Generator().generate();
+      final next = UuidV6Generator.fromLastUuid(state).generate();
+      expect(next, greaterThan(state));
+    });
+  });
+
+  group('Time-ordered generator (v7)', () {
+    test('Generates monotonic UUIDs within the same millisecond', () {
+      final generator = UuidV7Generator(
+        random: RandomMock(<int>[0, 0, 0]),
+        millisecondsSinceEpoch: () => 1645557742000,
+      );
+      final first = generator.generate();
+      final second = generator.generate();
+      expect(first.toString().substring(0, 13), '017f22e2-79b0');
+      expect(first.variant, Variant.rfc4122);
+      expect(first.version, 7);
+      expect(second, greaterThan(first));
+    });
+
+    test('Can be restored from its last UUID', () {
+      const milliseconds = 1645557742000;
+      final state = UuidV7Generator(
+        random: RandomMock(<int>[0, 0, 0]),
+        millisecondsSinceEpoch: () => milliseconds,
+      ).generate();
+      final next = UuidV7Generator.fromLastUuid(
+        state,
+        random: RandomMock(<int>[0, 0, 0]),
+        millisecondsSinceEpoch: () => milliseconds,
+      ).generate();
+      expect(next, greaterThan(state));
     });
   });
 }

@@ -67,17 +67,25 @@ void main() {
 
   Uuid u;
 
-  // generate time-based UUID (with random node ID)
+  // generate time-based UUIDv1 (with random node ID)
   u = TimeUuidGenerator().generate();
   print('$u (version: ${u.version} variant: ${u.variant})');
   // -> ... (version: 1 variant: Variant.rfc4122)
 
   // generate name + namespace based UUID
-  u = NameUuidGenerator(
-    NameUuidGenerator.urlNamespace,
-  ).generateFromString('https://dart.dev/');
+  u = NameUuidGenerator(NameUuidGenerator.urlNamespace).generateFromString('https://dart.dev/');
   print('$u (version: ${u.version} variant: ${u.variant})');
   // -> 51aa5a34-f12a-5843-89aa-2e687a910904 (version: 5 variant: Variant.rfc4122)
+
+  // generate a time-ordered UUIDv6
+  u = UuidV6Generator().generate();
+  print('$u (version: ${u.version} variant: ${u.variant})');
+  // -> ... (version: 6 variant: Variant.rfc4122)
+
+  // generate a time-ordered UUIDv7
+  u = UuidV7Generator().generate();
+  print('$u (version: ${u.version} variant: ${u.variant})');
+  // -> ... (version: 7 variant: Variant.rfc4122)
 
   // generate random-based UUID
   u = RandomUuidGenerator().generate();
@@ -98,12 +106,11 @@ void main() {
   print(uuid.v5('6ba7b811-9dad-11d1-80b4-00c04fd430c8', 'https://dart.dev/'));
   // -> 51aa5a34-f12a-5843-89aa-2e687a910904
 
+  // generate time-ordered UUID strings
+  print(uuid.v6());
+  print(uuid.v7());
+
   // compare UUIDs
-  print(
-    uuid.compare(
-      '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
-      '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
-    ),
-  );
+  print(uuid.compare('6ba7b811-9dad-11d1-80b4-00c04fd430c8', '6ba7b811-9dad-11d1-80b4-00c04fd430c8'));
   // -> 0
 }

@@ -5,6 +5,13 @@ import 'package:uuid_type/uuid_type.dart';
 import 'test_data.dart';
 
 void main() {
+  group('UUID utility', () {
+    test('Generates UUIDv6 and UUIDv7 strings', () {
+      expect(Uuid.parse(uuid.v6()).version, 6);
+      expect(Uuid.parse(uuid.v7()).version, 7);
+    });
+  });
+
   group('UUID', () {
     group('Constructors', () {
       test('Can be created from bytes', () {
