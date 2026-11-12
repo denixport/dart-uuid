@@ -251,26 +251,10 @@ class _Uuid implements Uuid {
       throw ArgumentError('Invalid offset');
     }
 
-    final x =
-        (bytes[offset + 0] << 24) |
-        (bytes[offset + 1] << 16) |
-        (bytes[offset + 2] << 8) |
-        bytes[offset + 3];
-    final y =
-        (bytes[offset + 4] << 24) |
-        (bytes[offset + 5] << 16) |
-        (bytes[offset + 6] << 8) |
-        bytes[offset + 7];
-    final z =
-        (bytes[offset + 8] << 24) |
-        (bytes[offset + 9] << 16) |
-        (bytes[offset + 10] << 8) |
-        bytes[offset + 11];
-    final w =
-        (bytes[offset + 12] << 24) |
-        (bytes[offset + 13] << 16) |
-        (bytes[offset + 14] << 8) |
-        bytes[offset + 15];
+    final x = (bytes[offset + 0] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3];
+    final y = (bytes[offset + 4] << 24) | (bytes[offset + 5] << 16) | (bytes[offset + 6] << 8) | bytes[offset + 7];
+    final z = (bytes[offset + 8] << 24) | (bytes[offset + 9] << 16) | (bytes[offset + 10] << 8) | bytes[offset + 11];
+    final w = (bytes[offset + 12] << 24) | (bytes[offset + 13] << 16) | (bytes[offset + 14] << 8) | bytes[offset + 15];
 
     if ((y | z | x | w) == 0) return nil;
 
@@ -306,11 +290,7 @@ class _Uuid implements Uuid {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other is _Uuid &&
-        x == other.x &&
-        y == other.y &&
-        z == other.z &&
-        w == other.w) {
+    if (other is _Uuid && x == other.x && y == other.y && z == other.z && w == other.w) {
       return true;
     } else if (other is Uuid) {
       return compareTo(other) == 0;

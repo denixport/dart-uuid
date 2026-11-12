@@ -34,11 +34,9 @@ class TimeUuidGenerator {
 
   // Number of milliseconds between UUID (1582-10-15 00:00:00)
   // and Unix (1970-01-01 00:00:00) epochs
-  static const int _epochOffsetMs =
-      (2440587 - 2299160) * Duration.millisecondsPerDay;
+  static const int _epochOffsetMs = (2440587 - 2299160) * Duration.millisecondsPerDay;
 
-  static final int _zeroMs =
-      _epochOffsetMs + DateTime.now().millisecondsSinceEpoch;
+  static final int _zeroMs = _epochOffsetMs + DateTime.now().millisecondsSinceEpoch;
 
   final Uint8List _buffer = Uint8List(16);
 
@@ -88,11 +86,7 @@ class TimeUuidGenerator {
   /// See [RFC 9562 section 6.3](https://www.rfc-editor.org/rfc/rfc9562.html#section-6.3).
   factory TimeUuidGenerator.fromLastUuid(Uuid state) {
     if (state.version != 1) {
-      throw ArgumentError.value(
-        state.version,
-        'version',
-        'UUID is not time-based',
-      );
+      throw ArgumentError.value(state.version, 'version', 'UUID is not time-based');
     }
 
     final sb = state.toBytes();
@@ -112,9 +106,7 @@ class TimeUuidGenerator {
     final gtmh = (gb[4] << 8) | gb[5] | ((gb[6] << 24) & 0x0F) | (gb[7] << 16);
 
     // if state is ahead of this generator, bump up clock sequence
-    if (((gtmh & 0xFFFF) - (stmh & 0xFFFF)) < 0 ||
-        ((gtmh >> 16) - (stmh >> 16)) < 0 ||
-        (gtl - stl) < 0) {
+    if (((gtmh & 0xFFFF) - (stmh & 0xFFFF)) < 0 || ((gtmh >> 16) - (stmh >> 16)) < 0 || (gtl - stl) < 0) {
       clockSeq++;
       clockSeq &= 0x3FFF;
     }
@@ -146,9 +138,7 @@ class TimeUuidGenerator {
     } else {
       // Keep the generated timestamp ahead of the previous one. The clock may
       // advance by fewer intervals than were added while it was unchanged.
-      _extraIntervals = _extraIntervals >= diff
-          ? _extraIntervals - diff + 1
-          : 0;
+      _extraIntervals = _extraIntervals >= diff ? _extraIntervals - diff + 1 : 0;
 
       if (diff < 0) {
         // clock regression, bump clock sequence
@@ -162,8 +152,7 @@ class TimeUuidGenerator {
     }
 
     final elapsedMs = elapsedIntervals ~/ _intervalsPerMs;
-    final msIntervals =
-        (elapsedIntervals - elapsedMs * _intervalsPerMs) + _extraIntervals;
+    final msIntervals = (elapsedIntervals - elapsedMs * _intervalsPerMs) + _extraIntervals;
 
     // print('  elapsedMs       : $elapsedMs');
     // print('  msIntervals     : $msIntervals');
@@ -189,6 +178,9 @@ class TimeUuidGenerator {
   }
 }
 
+/// Backwards-compatible name for the UUIDv1 generator.
+typedef UuidV1Generator = TimeUuidGenerator;
+
 /// Generator for name-based UUIDs (v5)
 /// SHA-1 hashing is used, MD5 is deprecated
 class NameUuidGenerator {
@@ -197,24 +189,16 @@ class NameUuidGenerator {
 
   /// Name space for DNS
   /// '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
-  static final dnsNamespace = Uuid.parse(
-    '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-  );
+  static final dnsNamespace = Uuid.parse('6ba7b810-9dad-11d1-80b4-00c04fd430c8');
 
   /// Name space for URL
-  static final urlNamespace = Uuid.parse(
-    '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
-  );
+  static final urlNamespace = Uuid.parse('6ba7b811-9dad-11d1-80b4-00c04fd430c8');
 
   /// Name space for ISO OID
-  static final oidNamespace = Uuid.parse(
-    '6ba7b812-9dad-11d1-80b4-00c04fd430c8',
-  );
+  static final oidNamespace = Uuid.parse('6ba7b812-9dad-11d1-80b4-00c04fd430c8');
 
   /// Name space for X.500 DN
-  static final x500namespace = Uuid.parse(
-    '6ba7b814-9dad-11d1-80b4-00c04fd430c8',
-  );
+  static final x500namespace = Uuid.parse('6ba7b814-9dad-11d1-80b4-00c04fd430c8');
 
   // shared buffer
   static final Uint8List _buffer = Uint8List(16);
@@ -277,5 +261,137 @@ class RandomUuidGenerator {
     _buffer[6] = (_buffer[6] & 0x0f) | 0x40; // version 4
 
     return Uuid.fromBytes(_buffer);
+  }
+}
+
+/// Generator for time-ordered UUIDv6 values.
+class UuidV6Generator {
+  final TimeUuidGenerator _v1Generator;
+
+  UuidV6Generator([Uint8List? nodeId]) : _v1Generator = TimeUuidGenerator(nodeId);
+
+  /// Restores generator state from a previously generated UUIDv6 value.
+  factory UuidV6Generator.fromLastUuid(Uuid state) {
+    if (state.version != 6) {
+      throw ArgumentError.value(state.version, 'version', 'UUID must be version 6');
+    }
+    final v6 = state.toBytes();
+    final timestamp =
+        (v6[0] << 52) |
+        (v6[1] << 44) |
+        (v6[2] << 36) |
+        (v6[3] << 28) |
+        (v6[4] << 20) |
+        (v6[5] << 12) |
+        ((v6[6] & 0x0f) << 8) |
+        v6[7];
+    final v1 = Uint8List(16);
+    v1[0] = timestamp >> 24;
+    v1[1] = timestamp >> 16;
+    v1[2] = timestamp >> 8;
+    v1[3] = timestamp;
+    v1[4] = timestamp >> 40;
+    v1[5] = timestamp >> 32;
+    v1[6] = ((timestamp >> 56) & 0x0f) | 0x10;
+    v1[7] = timestamp >> 48;
+    for (var i = 8; i < 16; i++) {
+      v1[i] = v6[i];
+    }
+    return UuidV6Generator._(TimeUuidGenerator.fromLastUuid(Uuid.fromBytes(v1)));
+  }
+
+  UuidV6Generator._(this._v1Generator);
+
+  int get clockSequence => _v1Generator.clockSequence;
+
+  Uint8List get nodeId => _v1Generator.nodeId;
+
+  Uuid generate() {
+    final v1 = _v1Generator.generate().toBytes();
+    final timestamp =
+        ((v1[6] & 0x0f) << 56) |
+        (v1[7] << 48) |
+        (v1[4] << 40) |
+        (v1[5] << 32) |
+        (v1[0] << 24) |
+        (v1[1] << 16) |
+        (v1[2] << 8) |
+        v1[3];
+    final bytes = Uint8List(16);
+    for (var i = 0; i < 6; i++) {
+      bytes[i] = timestamp >> (52 - i * 8);
+    }
+    bytes[6] = ((timestamp >> 8) & 0x0f) | 0x60;
+    bytes[7] = timestamp;
+    for (var i = 8; i < 16; i++) {
+      bytes[i] = v1[i];
+    }
+    return Uuid.fromBytes(bytes);
+  }
+}
+
+/// Generator for time-ordered UUIDv7 values.
+class UuidV7Generator {
+  static const _maxRandom = (1 << 74) - 1;
+  final Random _random;
+  final int Function() _millisecondsSinceEpoch;
+  int _lastMilliseconds = -1;
+  int _randomValue = 0;
+
+  UuidV7Generator({Random? random, int Function()? millisecondsSinceEpoch})
+    : _random = random ?? Random.secure(),
+      _millisecondsSinceEpoch = millisecondsSinceEpoch ?? (() => DateTime.now().millisecondsSinceEpoch);
+
+  /// Restores this monotonic generator's state from a UUIDv7 value.
+  factory UuidV7Generator.fromLastUuid(Uuid state, {Random? random, int Function()? millisecondsSinceEpoch}) {
+    if (state.version != 7) {
+      throw ArgumentError.value(state.version, 'version', 'UUID must be version 7');
+    }
+    final bytes = state.toBytes();
+    final milliseconds =
+        (bytes[0] << 40) | (bytes[1] << 32) | (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
+    final randomValue =
+        ((bytes[6] & 0x0f) << 70) |
+        (bytes[7] << 62) |
+        ((bytes[8] & 0x3f) << 56) |
+        (bytes[9] << 48) |
+        (bytes[10] << 40) |
+        (bytes[11] << 32) |
+        (bytes[12] << 24) |
+        (bytes[13] << 16) |
+        (bytes[14] << 8) |
+        bytes[15];
+    return UuidV7Generator._(
+      random ?? Random.secure(),
+      millisecondsSinceEpoch ?? (() => DateTime.now().millisecondsSinceEpoch),
+      milliseconds,
+      randomValue,
+    );
+  }
+
+  UuidV7Generator._(this._random, this._millisecondsSinceEpoch, this._lastMilliseconds, this._randomValue);
+
+  Uuid generate() {
+    var milliseconds = _millisecondsSinceEpoch();
+    if (milliseconds < _lastMilliseconds) milliseconds = _lastMilliseconds;
+    if (milliseconds > _lastMilliseconds) {
+      _lastMilliseconds = milliseconds;
+      _randomValue = (_random.nextInt(1 << 32) << 42) | (_random.nextInt(1 << 32) << 10) | _random.nextInt(1 << 10);
+    } else if (_randomValue == _maxRandom) {
+      throw StateError('Too many UUIDs requested in one millisecond');
+    } else {
+      _randomValue++;
+    }
+    final bytes = Uint8List(16);
+    for (var i = 0; i < 6; i++) {
+      bytes[i] = milliseconds >> (40 - i * 8);
+    }
+    bytes[6] = ((_randomValue >> 70) & 0x0f) | 0x70;
+    bytes[7] = _randomValue >> 62;
+    bytes[8] = ((_randomValue >> 56) & 0x3f) | 0x80;
+    for (var i = 9; i < 16; i++) {
+      bytes[i] = _randomValue >> (8 * (15 - i));
+    }
+    return Uuid.fromBytes(bytes);
   }
 }

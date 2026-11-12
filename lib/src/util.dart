@@ -13,6 +13,10 @@ class UuidUtil {
 
   static RandomUuidGenerator? _randGen;
 
+  static UuidV6Generator? _v6Gen;
+
+  static UuidV7Generator? _v7Gen;
+
   const UuidUtil._();
 
   /// Generates time-based UUID string
@@ -31,9 +35,21 @@ class UuidUtil {
 
   /// Generates name-based UUID string
   String v5(String namespace, String name) {
-    return NameUuidGenerator(
-      Uuid.parse(namespace),
-    ).generateFromString(name).toString();
+    return NameUuidGenerator(Uuid.parse(namespace)).generateFromString(name).toString();
+  }
+
+  /// Generates a time-ordered UUIDv6 string.
+  String v6() {
+    _v6Gen ??= UuidV6Generator();
+
+    return _v6Gen!.generate().toString();
+  }
+
+  /// Generates a time-ordered UUIDv7 string.
+  String v7() {
+    _v7Gen ??= UuidV7Generator();
+
+    return _v7Gen!.generate().toString();
   }
 
   /// Compares to UUID strings
